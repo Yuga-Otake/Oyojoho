@@ -3,6 +3,8 @@
 応用情報技術者試験(AP)の午前問題対策を行う、ブラウザだけで動く学習アプリです。
 ビルドもサーバも不要で、`index.html` を開けばそのまま動作します。
 
+**公開URL: https://yuga-otake.github.io/Oyojoho/**
+
 ## 特長
 
 - **110問の四択問題バンク** — テクノロジ系69問 / マネジメント系18問 / ストラテジ系23問。全問に解説付き
@@ -34,7 +36,16 @@ open index.html          # macOS (Windows は start、Linux は xdg-open)
 npx http-server . -p 8080    # → http://localhost:8080
 ```
 
-GitHub Pages で公開する場合は、リポジトリの Settings → Pages で対象ブランチのルートを指定すれば、そのまま静的サイトとして配信できます。
+### GitHub Pages への公開
+
+`.github/workflows/pages.yml` により、このブランチへ push するたびに GitHub Pages へ自動デプロイされます。
+
+初回のみ、リポジトリの **Settings → Pages → Build and deployment → Source** を
+**「GitHub Actions」** に設定してください(ワークフローからこの設定自体を変更することはできないため)。
+設定後、push するか Actions タブから `Deploy to GitHub Pages` を再実行すると公開されます。
+
+ブランチから直接配信したい場合は、Source を「Deploy from a branch」にして対象ブランチの `/ (root)` を指定します。
+その場合 `.github/workflows/pages.yml` は不要です。
 
 ### キーボード操作
 

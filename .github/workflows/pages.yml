@@ -26,11 +26,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # enablement: true で、未設定ならPages自体を有効化する
+      # 事前にリポジトリの Settings -> Pages -> Source を
+      # 「GitHub Actions」にしておく必要がある(初回のみの手動設定)
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       # ビルド不要の静的サイトなので、リポジトリの内容をそのまま公開する
       - name: Upload artifact
