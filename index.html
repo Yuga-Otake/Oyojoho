@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="応用情報技術者試験の午前問題を、演習・模擬試験・間隔反復復習で学習できるWebアプリ。">
+<meta name="theme-color" content="#1f6feb">
+<title>応用情報 学習アプリ</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📘</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <h1 class="logo"><span class="logo-mark">AP</span> 応用情報 学習アプリ</h1>
+    <nav class="nav" id="nav">
+      <button class="nav-btn is-active" data-screen="home">ホーム</button>
+      <button class="nav-btn" data-screen="practice">演習</button>
+      <button class="nav-btn" data-screen="stats">統計</button>
+      <button class="nav-btn" data-screen="glossary">用語・公式</button>
+      <button class="nav-btn" data-screen="settings">設定</button>
+    </nav>
+    <button id="themeToggle" class="icon-btn" title="テーマを切り替える" aria-label="テーマを切り替える">🌗</button>
+  </div>
+</header>
+
+<main class="container" id="main">
+
+  <!-- ============ ホーム ============ -->
+  <section class="screen is-active" id="screen-home">
+    <div class="hero">
+      <div class="hero-text">
+        <h2>今日の学習をはじめましょう</h2>
+        <p class="muted">午前問題を分野別に演習し、間違えた問題は間隔反復で自動的に復習キューへ入ります。</p>
+      </div>
+      <div class="streak-badge">
+        <div class="streak-num" id="homeStreak">0</div>
+        <div class="streak-label">日連続</div>
+      </div>
+    </div>
+
+    <div class="stat-grid" id="homeStats"></div>
+
+    <div class="card-row">
+      <div class="card action-card">
+        <h3>🔁 今日の復習</h3>
+        <p class="muted" id="dueSummary">復習期限の問題を確認しています…</p>
+        <button class="btn btn-primary" id="startReviewBtn">復習を開始</button>
+      </div>
+      <div class="card action-card">
+        <h3>⚡ クイック演習</h3>
+        <p class="muted">全分野からランダムに10問。すきま時間の学習に。</p>
+        <button class="btn btn-primary" id="quickStartBtn">10問スタート</button>
+      </div>
+      <div class="card action-card">
+        <h3>📝 模擬試験</h3>
+        <p class="muted">本番形式で時間を計って挑戦。終了後にまとめて採点します。</p>
+        <button class="btn btn-secondary" id="mockStartBtn">模擬試験の設定へ</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>分野別の到達度</h3>
+      <div id="homeFieldBars" class="bar-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ 演習設定 ============ -->
+  <section class="screen" id="screen-practice">
+    <h2>演習の設定</h2>
+
+    <div class="card">
+      <h3>出題モード</h3>
+      <div class="chip-group" id="modeGroup">
+        <button class="chip is-active" data-mode="practice">演習(1問ずつ解説)</button>
+        <button class="chip" data-mode="exam">模擬試験(まとめて採点)</button>
+        <button class="chip" data-mode="review">復習(期限到来のみ)</button>
+      </div>
+      <p class="hint" id="modeHint">1問ごとに正誤と解説を確認しながら進めます。</p>
+    </div>
+
+    <div class="card">
+      <h3>出題分野</h3>
+      <div class="chip-group" id="categoryGroup">
+        <button class="chip is-active" data-category="all">すべて</button>
+        <button class="chip" data-category="テクノロジ系">テクノロジ系</button>
+        <button class="chip" data-category="マネジメント系">マネジメント系</button>
+        <button class="chip" data-category="ストラテジ系">ストラテジ系</button>
+      </div>
+      <div class="field-select" id="fieldSelect"></div>
+    </div>
+
+    <div class="card">
+      <h3>出題条件</h3>
+      <div class="form-row">
+        <label for="countSelect">問題数</label>
+        <select id="countSelect">
+          <option value="5">5問</option>
+          <option value="10" selected>10問</option>
+          <option value="20">20問</option>
+          <option value="40">40問</option>
+          <option value="0">上限なし(該当すべて)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="orderSelect">出題順</label>
+        <select id="orderSelect">
+          <option value="random">ランダム</option>
+          <option value="weak">苦手優先(正答率の低い順)</option>
+          <option value="unseen">未出題を優先</option>
+          <option value="due">復習期限が近い順</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="difficultySelect">難易度</label>
+        <select id="difficultySelect">
+          <option value="0">指定なし</option>
+          <option value="1">★☆☆ 基本</option>
+          <option value="2">★★☆ 標準</option>
+          <option value="3">★★★ 応用</option>
+        </select>
+      </div>
+      <div class="form-row" id="timeLimitRow" hidden>
+        <label for="timeLimitSelect">制限時間</label>
+        <select id="timeLimitSelect">
+          <option value="0">なし</option>
+          <option value="10">10分</option>
+          <option value="20">20分</option>
+          <option value="30" selected>30分</option>
+          <option value="60">60分</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="pool-info" id="poolInfo"></p>
+    <button class="btn btn-primary btn-lg" id="startBtn">出題を開始する</button>
+  </section>
+
+  <!-- ============ 出題中 ============ -->
+  <section class="screen" id="screen-quiz">
+    <div class="quiz-top">
+      <div class="progress">
+        <div class="progress-bar"><span id="progressFill"></span></div>
+        <div class="progress-text"><span id="progressText">1 / 10</span></div>
+      </div>
+      <div class="quiz-meta">
+        <span class="timer" id="timer" hidden>00:00</span>
+        <button class="btn btn-ghost btn-sm" id="abortBtn">中断</button>
+      </div>
+    </div>
+
+    <div class="card question-card">
+      <div class="q-tags">
+        <span class="tag tag-cat" id="qCategory"></span>
+        <span class="tag" id="qField"></span>
+        <span class="tag tag-diff" id="qDifficulty"></span>
+        <span class="tag tag-id" id="qId"></span>
+      </div>
+      <p class="q-text" id="qText"></p>
+      <ul class="choices" id="choices"></ul>
+
+      <div class="feedback" id="feedback" hidden>
+        <div class="feedback-head" id="feedbackHead"></div>
+        <div class="feedback-body">
+          <h4>解説</h4>
+          <p id="explanation"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-actions">
+      <button class="btn btn-ghost" id="prevBtn" hidden>← 前の問題</button>
+      <button class="btn btn-primary" id="nextBtn" disabled>次の問題 →</button>
+    </div>
+    <p class="hint center">キーボード: 1〜4 で選択、Enter で次へ</p>
+  </section>
+
+  <!-- ============ 結果 ============ -->
+  <section class="screen" id="screen-result">
+    <div class="result-hero">
+      <div class="score-ring" id="scoreRing">
+        <div class="score-inner">
+          <div class="score-pct" id="scorePct">0%</div>
+          <div class="score-sub" id="scoreSub">0 / 0 問正解</div>
+        </div>
+      </div>
+      <div class="result-msg">
+        <h2 id="resultTitle">お疲れさまでした</h2>
+        <p class="muted" id="resultComment"></p>
+        <p class="muted" id="resultTime"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>分野別の結果</h3>
+      <div id="resultFieldBars" class="bar-list"></div>
+    </div>
+
+    <div class="card">
+      <h3>解答の振り返り</h3>
+      <div class="review-list" id="reviewList"></div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn-primary" id="retryWrongBtn">間違えた問題だけ再挑戦</button>
+      <button class="btn btn-secondary" id="againBtn">同じ条件でもう一度</button>
+      <button class="btn btn-ghost" id="backHomeBtn">ホームへ戻る</button>
+    </div>
+  </section>
+
+  <!-- ============ 統計 ============ -->
+  <section class="screen" id="screen-stats">
+    <h2>学習統計</h2>
+    <div class="stat-grid" id="statsSummary"></div>
+
+    <div class="card">
+      <h3>学習カレンダー(直近12週)</h3>
+      <div class="heatmap" id="heatmap"></div>
+      <div class="heatmap-legend"><span>少</span><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><span>多</span></div>
+    </div>
+
+    <div class="card">
+      <h3>分野別の正答率</h3>
+      <div id="statsFieldBars" class="bar-list"></div>
+    </div>
+
+    <div class="card">
+      <h3>苦手な問題 ワースト10</h3>
+      <div id="weakList" class="weak-list"></div>
+    </div>
+
+    <div class="card">
+      <h3>直近のセッション</h3>
+      <div id="sessionList" class="session-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ 用語・公式 ============ -->
+  <section class="screen" id="screen-glossary">
+    <h2>用語・公式集</h2>
+    <input type="search" id="glossarySearch" class="search-input" placeholder="キーワードで絞り込む(例: 稼働率、RAID、正規化)">
+    <div id="glossaryList"></div>
+  </section>
+
+  <!-- ============ 設定 ============ -->
+  <section class="screen" id="screen-settings">
+    <h2>設定</h2>
+
+    <div class="card">
+      <h3>表示</h3>
+      <div class="form-row">
+        <label for="themeSelect">テーマ</label>
+        <select id="themeSelect">
+          <option value="auto">端末の設定に従う</option>
+          <option value="light">ライト</option>
+          <option value="dark">ダーク</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="shuffleChoices">選択肢の順序をシャッフル</label>
+        <input type="checkbox" id="shuffleChoices" checked>
+      </div>
+      <div class="form-row">
+        <label for="instantFeedback">演習モードで即時に正誤を表示</label>
+        <input type="checkbox" id="instantFeedback" checked>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>学習データ</h3>
+      <p class="muted">学習履歴はこのブラウザ内(localStorage)にのみ保存されます。機種変更時はエクスポートしてください。</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="exportBtn">データをエクスポート</button>
+        <button class="btn btn-secondary" id="importBtn">データをインポート</button>
+        <button class="btn btn-danger" id="resetBtn">学習データを消去</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <p class="hint" id="dataInfo"></p>
+    </div>
+
+    <div class="card">
+      <h3>このアプリについて</h3>
+      <p class="muted">
+        応用情報技術者試験(AP)の午前問題対策アプリです。収録問題は
+        <strong id="totalQuestions">0</strong> 問。試験制度・出題範囲はIPAのシラバスを参照してください。
+      </p>
+      <p class="muted">問題はシラバスの出題範囲に沿って作成したオリジナル問題です。実際の過去問題そのものではありません。</p>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/data/questions-technology.js"></script>
+<script src="js/data/questions-management.js"></script>
+<script src="js/data/questions-strategy.js"></script>
+<script src="js/data/glossary.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/srs.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
