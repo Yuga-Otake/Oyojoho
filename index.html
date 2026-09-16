@@ -17,6 +17,7 @@
     <nav class="nav" id="nav">
       <button class="nav-btn is-active" data-screen="home">ホーム</button>
       <button class="nav-btn" data-screen="practice">演習</button>
+      <button class="nav-btn" data-screen="flow">計算フロー</button>
       <button class="nav-btn" data-screen="stats">統計</button>
       <button class="nav-btn" data-screen="glossary">用語・公式</button>
       <button class="nav-btn" data-screen="settings">設定</button>
@@ -52,6 +53,11 @@
         <h3>⚡ クイック演習</h3>
         <p class="muted">全分野からランダムに10問。すきま時間の学習に。</p>
         <button class="btn btn-primary" id="quickStartBtn">10問スタート</button>
+      </div>
+      <div class="card action-card">
+        <h3>🧮 計算フロー</h3>
+        <p class="muted" id="flowHomeInfo">計算問題を迷いどころごとの選択に分解して解き進めます。</p>
+        <button class="btn btn-secondary" id="flowStartBtn">フローを選ぶ</button>
       </div>
       <div class="card action-card">
         <h3>📝 模擬試験</h3>
@@ -135,6 +141,61 @@
 
     <p class="pool-info" id="poolInfo"></p>
     <button class="btn btn-primary btn-lg" id="startBtn">出題を開始する</button>
+  </section>
+
+  <!-- ============ 計算フロー ============ -->
+  <section class="screen" id="screen-flow">
+
+    <div id="flowListView">
+      <h2>計算フロー</h2>
+      <p class="muted">
+        計算問題を「受験者が迷いやすいポイント」ごとのステップに分解しました。
+        1ステップずつ選択肢を選んで進み、間違えたらその場で理由を確認して選び直せます。
+      </p>
+      <div class="stat-grid" id="flowSummary"></div>
+      <div id="flowList" class="flow-list"></div>
+    </div>
+
+    <div id="flowPlayerView" hidden>
+      <div class="quiz-top">
+        <div class="progress">
+          <div class="progress-bar"><span id="flowProgressFill"></span></div>
+          <div class="progress-text"><span id="flowProgressText"></span></div>
+        </div>
+        <div class="quiz-meta">
+          <button class="btn btn-ghost btn-sm" id="flowExitBtn">一覧へ戻る</button>
+        </div>
+      </div>
+
+      <div class="card scenario-card">
+        <div class="q-tags" id="flowTags"></div>
+        <h3 id="flowTitle"></h3>
+        <p class="q-text" id="flowScenario"></p>
+      </div>
+
+      <ol class="flow-trail" id="flowTrail" hidden></ol>
+
+      <div class="card" id="flowStepCard">
+        <div class="pitfall" id="flowPitfall"></div>
+        <p class="q-text" id="flowPrompt"></p>
+        <ul class="choices" id="flowChoices"></ul>
+        <div class="feedback" id="flowFeedback" hidden>
+          <div class="feedback-head" id="flowFeedbackHead"></div>
+          <div class="feedback-body">
+            <h4 id="flowFeedbackLabel">解説</h4>
+            <p id="flowExplanation"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-actions">
+        <button class="btn btn-primary" id="flowNextBtn" disabled>次のステップへ →</button>
+      </div>
+      <p class="hint center" id="flowKeyHint">キーボード: 1〜4 で選択、Enter で次のステップへ</p>
+
+      <div class="card" id="flowSummaryCard" hidden></div>
+    </div>
+
   </section>
 
   <!-- ============ 出題中 ============ -->
@@ -296,11 +357,13 @@
 <script src="js/data/questions-technology.js"></script>
 <script src="js/data/questions-management.js"></script>
 <script src="js/data/questions-strategy.js"></script>
+<script src="js/data/flows.js"></script>
 <script src="js/data/glossary.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/srs.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/quiz.js"></script>
+<script src="js/flow.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

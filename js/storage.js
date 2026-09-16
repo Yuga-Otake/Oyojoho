@@ -12,6 +12,7 @@
     return {
       version: 1,
       cards: {},          // 問題ID -> 学習カード(SRS情報 + 正誤回数)
+      flows: {},          // フローID -> 計算フローの成績
       sessions: [],       // 直近のセッション結果
       daily: {},          // 'YYYY-MM-DD' -> {answered, correct}
       streak: { current: 0, best: 0, lastDate: null },
@@ -88,6 +89,15 @@
     return s.cards[qid];
   }
 
+  /** 計算フローの成績を取得(なければ生成) */
+  function flow(fid) {
+    var s = get();
+    if (!s.flows[fid]) {
+      s.flows[fid] = { attempts: 0, best: 0, last: 0, perfect: false, lastAt: null };
+    }
+    return s.flows[fid];
+  }
+
   function todayKey(d) {
     var t = d || new Date();
     return t.getFullYear() + '-' +
@@ -141,7 +151,7 @@
   }
 
   global.AppStorage = {
-    load: load, get: get, save: save, reset: reset, card: card,
+    load: load, get: get, save: save, reset: reset, card: card, flow: flow,
     recordDay: recordDay, effectiveStreak: effectiveStreak,
     todayKey: todayKey, exportJSON: exportJSON, importJSON: importJSON,
     STORAGE_KEY: KEY

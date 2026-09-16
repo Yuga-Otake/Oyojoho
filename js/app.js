@@ -74,6 +74,7 @@
     global.scrollTo(0, 0);
     if (name === 'home') renderHome();
     if (name === 'stats') renderStats();
+    if (name === 'flow' && !global.FlowMode.isRunning()) global.FlowMode.renderList();
     if (name === 'practice') updatePoolInfo();
   }
 
@@ -106,6 +107,15 @@
         ? 'まずは演習を始めましょう。間違えた問題が自動で復習キューに入ります。'
         : '今日の復習はありません。未着手が ' + neverSeen + ' 問残っています。');
     $('startReviewBtn').disabled = due.length === 0;
+
+    var flows = global.FLOW_BANK || [];
+    var flowDone = flows.filter(function (f) {
+      var r = state.flows[f.id];
+      return r && r.attempts > 0;
+    }).length;
+    $('flowHomeInfo').textContent = flowDone === 0
+      ? '計算問題を迷いどころごとの選択に分解して解き進めます。'
+      : flows.length + '件中 ' + flowDone + '件に挑戦済みです。';
 
     var bars = $('homeFieldBars');
     bars.innerHTML = '';
@@ -412,6 +422,13 @@
     grid.appendChild(statTile(pct(s.coverage) + '%', '出題範囲の網羅率'));
     grid.appendChild(statTile(s.streak + '日', '連続学習(最長' + s.bestStreak + '日)'));
 
+    var flows = global.FLOW_BANK || [];
+    var flowPerfect = flows.filter(function (f) {
+      var r = state.flows[f.id];
+      return r && r.perfect;
+    }).length;
+    grid.appendChild(statTile(flowPerfect + ' / ' + flows.length, '計算フロー ノーミス達成'));
+
     // ヒートマップ
     var hm = $('heatmap');
     hm.innerHTML = '';
@@ -544,6 +561,10 @@
           clearInterval(timerId);
           session = null;
         }
+        if (global.FlowMode.isRunning() && b.dataset.screen !== 'flow') {
+          if (!global.confirm('計算フローの途中です。中断してもよろしいですか?')) return;
+          global.FlowMode.exit();
+        }
         showScreen(b.dataset.screen);
       });
     });
@@ -562,6 +583,7 @@
     $('startReviewBtn').addEventListener('click', function () {
       startSession({ mode: 'review', category: 'all', fields: [], count: 0, difficulty: 0 });
     });
+    $('flowStartBtn').addEventListener('click', function () { showScreen('flow'); });
     $('mockStartBtn').addEventListener('click', function () {
       showScreen('practice');
       setMode('exam');
@@ -685,6 +707,13 @@
     }
     applyTheme(state.settings.theme);
     bind();
+    global.FlowMode.init({
+      toast: toast,
+      onStudied: function (steps, firstTry) {
+        global.AppStorage.recordDay(steps, firstTry);
+        global.AppStorage.save();
+      }
+    });
     setMode('practice');
     renderFieldChips();
     renderGlossary('');
