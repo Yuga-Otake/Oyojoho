@@ -20,6 +20,7 @@
     startQuestions: function () {},
     startFlow: function () {},
     startCase: function () {},
+    startDrill: function () {},
     canStart: function () { return true; },
     showScreen: function () {}
   };
@@ -78,6 +79,12 @@
       if (arr.indexOf(c) < 0) arr.push(c);
     });
   });
+
+  /** この節に対応する計算ドリルの型(DrillGen は後から読み込まれるので都度求める) */
+  function drillsFor(sec) {
+    if (!global.DrillGen || !global.DrillMode) return [];
+    return global.DrillMode.types().filter(function (t) { return sectionFor(global.DrillMode.lessonItem(t)) === sec; });
+  }
 
   /* ============ 汎用 ============ */
   function $(id) { return doc.getElementById(id); }
@@ -239,7 +246,8 @@
     var qs = questionsBySection[sec.id] || [];
     var flows = flowsBySection[sec.id] || [];
     var cases = casesBySection[sec.id] || [];
-    if (qs.length || flows.length || cases.length) {
+    var drills = drillsFor(sec);
+    if (qs.length || flows.length || cases.length || drills.length) {
       var pr = el('section', 'lesson-practice');
       pr.appendChild(el('h3', '', '🎯 この単元を解いて確かめる'));
       if (qs.length) {
@@ -268,6 +276,9 @@
       });
       cases.forEach(function (c) {
         row.appendChild(btn('📝 午後演習: ' + c.title, 'btn-ghost', function () { closeModal(); ctx.startCase(c.id); }));
+      });
+      drills.forEach(function (d) {
+        row.appendChild(btn('🔢 計算ドリル: ' + d.title, 'btn-ghost', function () { closeModal(); ctx.startDrill(d.id); }));
       });
       if (!can) {
         Array.prototype.forEach.call(row.querySelectorAll('button'), function (b) { b.disabled = true; });
@@ -346,7 +357,9 @@
     p2.appendChild(el('b', '', q.choices[q.answer]));
     body.appendChild(p2);
     body.appendChild(el('p', 'exp', q.explanation));
-    if (c.wrong) body.appendChild(el('p', 'hint', '誤答 ' + c.wrong + '回 / 正解 ' + (c.correct || 0) + '回'));
+    var REASON_NAMES = { knowledge: '知識不足', calc: '計算ミス', misread: '問題文の読み違い', confuse: '用語の混同', careless: 'ケアレスミス' };
+    if (c.wrong) body.appendChild(el('p', 'hint', '誤答 ' + c.wrong + '回 / 正解 ' + (c.correct || 0) + '回' +
+      (c.lastReason && REASON_NAMES[c.lastReason] ? '  ・前回の理由: ' + REASON_NAMES[c.lastReason] : '')));
     d.appendChild(body);
     return d;
   }

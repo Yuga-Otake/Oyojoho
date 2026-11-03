@@ -1040,3 +1040,140 @@ body.modal-open { overflow: hidden; }
   .v-ecb { grid-template-columns: repeat(3, 1fr); }
 }
 .hero #examNote { color: rgba(255, 255, 255, .85); font-size: .8rem; margin: 8px 0 0; line-height: 1.7; }
+
+/* =====================================================================
+ * 計算ドリル・合格予測・学習計画・理由タグ・暗記カード・AI 採点
+ * ===================================================================== */
+/* 計算ドリル */
+.drill-start { margin-bottom: 6px; }
+.drill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.drill-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 13px; cursor: pointer;
+  transition: border-color .12s, transform .12s;
+}
+.drill-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+.drill-card.weak { border-left: 4px solid var(--danger); }
+.drill-title { font-weight: 700; font-size: .92rem; }
+.drill-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .76rem; color: var(--text-muted); }
+.flow-badge.ng { background: var(--danger-soft); color: var(--danger); font-weight: 700; }
+.drill-time.slow { color: var(--danger); font-weight: 700; }
+.drill-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0 10px; }
+.drill-input {
+  flex: 1 1 160px; max-width: 260px; font: inherit; font-size: 1.15rem; font-variant-numeric: tabular-nums; padding: 9px 12px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
+}
+.drill-input:focus { outline: none; border-color: var(--primary); }
+.drill-unit { font-weight: 700; color: var(--text-muted); }
+.drill-memo-toggle { margin-bottom: 6px; }
+.drill-memo { border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.drill-canvas { width: 100%; height: 220px; background: var(--surface-2); border-radius: 6px; touch-action: none; cursor: crosshair; display: block; }
+.drill-memo-text { width: 100%; font: inherit; font-size: .9rem; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; background: var(--surface); color: var(--text); resize: vertical; }
+.drill-sec { font-size: .82rem; color: var(--text-muted); margin: -4px 0 10px; }
+.drill-sec.slow { color: var(--danger); font-weight: 600; }
+.drill-diag { background: var(--warn-soft); color: var(--warn); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 10px; font-size: .92rem; line-height: 1.7; }
+.drill-diag.none { background: var(--surface-2); color: var(--text-muted); }
+.drill-steps { margin: 0; padding-left: 1.4em; line-height: 1.85; font-variant-numeric: tabular-nums; }
+
+/* 午後演習: 計算設問・分野選び・AI */
+.case-num-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.case-num { width: 180px; font: inherit; font-size: 1.05rem; padding: 8px 10px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+.case-unit { font-weight: 700; color: var(--text-muted); }
+.tag-req { background: var(--danger-soft); color: var(--danger); font-weight: 700; }
+.area-card { padding: 16px 18px; }
+.area-list { display: grid; gap: 4px; }
+.area-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: .9rem; }
+.area-name { font-weight: 600; flex: 1; }
+.area-score { font-size: .82rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.area-score.ok { color: var(--success); font-weight: 700; }
+.ai-box { margin-top: 12px; border: 1px solid var(--border); border-left: 4px solid #8a5cf6; border-radius: var(--radius-sm); padding: 12px 14px; background: var(--surface); }
+.ai-box h4 { margin: 10px 0 4px; font-size: .84rem; color: var(--text-muted); }
+.ai-box p { margin: 0; font-size: .92rem; line-height: 1.8; }
+.ai-hint { margin: 0; }
+.btn-ai { background: #8a5cf6; color: #fff; border-color: #8a5cf6; }
+.btn-ai:hover { background: #7344e8; }
+.ai-loading { color: #8a5cf6; font-weight: 700; animation: ai-pulse 1.2s ease-in-out infinite; }
+@keyframes ai-pulse { 50% { opacity: .45; } }
+.ai-error { color: var(--danger); font-size: .86rem; margin-top: 6px !important; }
+.ai-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.ai-badge { font-size: .72rem; font-weight: 700; background: #8a5cf6; color: #fff; padding: 2px 10px; border-radius: 99px; }
+.ai-score { font-weight: 700; }
+.ai-score.full { color: var(--success); } .ai-score.half { color: var(--warn); } .ai-score.zero { color: var(--danger); }
+.ai-box .case-kw li.miss { color: var(--danger); }
+.form-row-wide { flex-wrap: wrap; }
+.ai-key-row { display: flex; gap: 6px; flex: 1 1 260px; flex-wrap: wrap; }
+.ai-key-row .text-input, .ai-key-row select { flex: 1 1 200px; min-width: 0; }
+.text-input { font: inherit; font-size: .9rem; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+
+/* 合格への道のり */
+.plan-card h3 { margin-top: 0; }
+.meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 10px; }
+.meter-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.meter-label { font-weight: 700; }
+.meter-score { font-weight: 700; font-variant-numeric: tabular-nums; }
+.meter-score.ok { color: var(--success); } .meter-score.ng { color: var(--danger); } .meter-score.none { color: var(--text-muted); font-weight: 400; }
+.meter-track { position: relative; height: 12px; border-radius: 99px; background: var(--surface-2); margin: 6px 0 4px; overflow: visible; }
+.meter-fill { height: 100%; border-radius: 99px; background: var(--text-muted); transition: width .3s; }
+.meter-fill.ok { background: var(--success); } .meter-fill.ng { background: var(--danger); }
+.meter-line { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--text); opacity: .6; }
+.meter-note { font-size: .76rem; color: var(--text-muted); }
+.gains { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 12px; }
+.gains-label { font-size: .82rem; color: var(--text-muted); }
+.chip-sm { font-size: .8rem; padding: 4px 10px; }
+.gain-chip { border-color: var(--success); color: var(--success); }
+.plan { border-top: 1px solid var(--border); padding-top: 12px; }
+.plan-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.plan-days { font-weight: 700; font-size: 1.05rem; }
+.plan-date-label { color: var(--text-muted); font-size: .86rem; }
+.plan-head .btn { margin-left: auto; }
+.plan-date { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.plan-sub { font-size: .78rem; font-weight: 700; color: var(--text-muted); letter-spacing: .05em; margin: 4px 0 6px; }
+.plan-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin-bottom: 10px; }
+.plan-label { font-weight: 600; font-size: .92rem; }
+.plan-count { font-size: .84rem; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.plan-item .bar-track { grid-column: 1 / -1; }
+.plan-note { grid-column: 1 / -1; font-size: .78rem; color: var(--text-muted); }
+.sub-h { margin: 14px 0 6px; font-size: .88rem; }
+.weak-item .rate.gain, .weak-item .rate.ok { color: var(--success); }
+
+/* 間違えた理由 */
+.reason-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); width: 100%; }
+.reason-label { font-size: .82rem; font-weight: 700; color: var(--text-muted); margin-right: 4px; }
+.reason-tip { width: 100%; margin: 4px 0 0; }
+.bar-fill.reason { background: #8a5cf6; }
+.reason-advice { margin: 10px 0 0; font-size: .9rem; background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px 12px; }
+
+/* 暗記カード */
+#glossaryMode { margin-bottom: 12px; }
+.flash-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.flash-filter { font: inherit; font-size: .88rem; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.flash-prog { font-size: .86rem; color: var(--text-muted); }
+.flash-card {
+  width: 100%; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  font: inherit; color: var(--text); text-align: center; cursor: pointer; padding: 24px 20px;
+  background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+  transition: border-color .15s;
+}
+.flash-card.flipped { border-color: var(--primary); background: var(--primary-soft); }
+.flash-group { font-size: .76rem; color: var(--text-muted); }
+.flash-term { font-size: 1.35rem; font-weight: 700; }
+.flash-formula { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; color: var(--primary); }
+.flash-desc { font-size: .95rem; line-height: 1.8; max-width: 560px; }
+.flash-hint { font-size: .8rem; color: var(--text-muted); }
+.flash-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+.flash-actions .btn { min-width: 140px; }
+
+@media (max-width: 640px) {
+  .drill-input { max-width: none; }
+  .plan-head .btn { margin-left: 0; }
+}
+.header-inner { max-width: 1180px; }
+.nav-btn { padding: 7px 10px; }
+@media (max-width: 1100px) and (min-width: 641px) {
+  .nav { width: 100%; order: 3; margin-left: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  #themeToggle { margin-left: auto; }
+}
+
+/* hidden 属性は display 指定より常に優先する */
+[hidden] { display: none !important; }

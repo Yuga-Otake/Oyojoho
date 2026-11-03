@@ -22,7 +22,7 @@
       <button class="nav-btn is-active" data-screen="home">ホーム</button>
       <button class="nav-btn" data-screen="practice">演習</button>
       <button class="nav-btn" data-screen="textbook">教科書</button>
-      <button class="nav-btn" data-screen="flow" id="navFlow">計算フロー</button>
+      <button class="nav-btn" data-screen="flow" id="navFlow">計算</button>
       <button class="nav-btn" data-screen="cases" id="navCases">午後演習</button>
       <button class="nav-btn" data-screen="stats">統計</button>
       <button class="nav-btn" data-screen="glossary">用語・公式</button>
@@ -48,6 +48,8 @@
       </div>
     </div>
 
+    <div class="card plan-card" id="homePlan"></div>
+
     <div class="stat-grid" id="homeStats"></div>
 
     <div class="card-row">
@@ -67,9 +69,9 @@
         <button class="btn btn-secondary" id="caseStartBtn">事例を選ぶ</button>
       </div>
       <div class="card action-card" id="flowHomeCard">
-        <h3>🧮 計算フロー</h3>
-        <p class="muted" id="flowHomeInfo">計算問題を迷いどころごとの選択に分解して解き進めます。</p>
-        <button class="btn btn-secondary" id="flowStartBtn">フローを選ぶ</button>
+        <h3>🔢 計算ドリル</h3>
+        <p class="muted" id="flowHomeInfo">数値が毎回変わる計算問題で、解き方の型と速さを身につけます。</p>
+        <button class="btn btn-secondary" id="flowStartBtn">計算を練習する</button>
       </div>
       <div class="card action-card">
         <h3>📝 模擬試験</h3>
@@ -158,8 +160,61 @@
     <button class="btn btn-primary btn-lg" id="startBtn">出題を開始する</button>
   </section>
 
-  <!-- ============ 計算フロー ============ -->
+  <!-- ============ 計算(ドリル・フロー) ============ -->
   <section class="screen" id="screen-flow">
+    <div class="tb-tabs" id="calcTabs" role="tablist">
+      <button class="tb-tab is-active" data-view="drill" role="tab">🔢 計算ドリル</button>
+      <button class="tb-tab" data-view="flow" role="tab">🧮 計算フロー</button>
+    </div>
+
+    <div id="drillTab">
+      <div id="drillHome">
+        <h2>計算ドリル</h2>
+        <p class="muted">型ごとに数値が毎回変わる計算問題です。答えを数値で入力すると、間違えたときは「どこで間違えたか」を推定して指摘します。1問ごとに時間を測り、本番の目安時間と比べます。</p>
+        <div class="stat-grid" id="drillSummary"></div>
+        <div class="btn-row drill-start">
+          <button class="btn btn-primary" id="drillWeakBtn">🎯 苦手優先で10問</button>
+          <button class="btn btn-secondary" id="drillMixBtn">🔀 ミックスで10問</button>
+        </div>
+        <p class="hint">型をクリックすると、その型を5問続けて練習します。</p>
+        <div id="drillList"></div>
+      </div>
+
+      <div id="drillPlayer" hidden>
+        <div class="quiz-top">
+          <div class="progress">
+            <div class="progress-bar"><span id="drillProgressFill"></span></div>
+            <div class="progress-text"><span id="drillProgressText"></span></div>
+          </div>
+          <div class="quiz-meta">
+            <span class="timer" id="drillTimer"></span>
+            <button class="btn btn-ghost btn-sm" id="drillExitBtn">一覧へ戻る</button>
+          </div>
+        </div>
+        <div class="card" id="drillQCard">
+          <div class="q-tags" id="drillTags"></div>
+          <p class="q-text" id="drillQ"></p>
+          <div class="drill-answer">
+            <input type="text" id="drillInput" class="drill-input" inputmode="decimal" autocomplete="off" placeholder="答えを数値で入力" aria-label="答え">
+            <span class="drill-unit" id="drillUnit"></span>
+            <button class="btn btn-primary" id="drillSubmit">解答する</button>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm drill-memo-toggle" id="drillMemoToggle">✏️ 計算メモを開く</button>
+          <div class="drill-memo" id="drillMemoBox" hidden>
+            <canvas id="drillMemo" class="drill-canvas" aria-label="手書きメモ"></canvas>
+            <textarea id="drillMemoText" class="drill-memo-text" rows="2" placeholder="キーボードで途中式をメモすることもできます"></textarea>
+            <button type="button" class="btn btn-ghost btn-sm" id="drillMemoClear">メモを消す</button>
+          </div>
+          <div class="feedback" id="drillFeedback" hidden></div>
+          <div class="quiz-actions">
+            <button class="btn btn-primary" id="drillNext" hidden>次の問題 →</button>
+          </div>
+        </div>
+        <div class="card" id="drillResult" hidden></div>
+      </div>
+    </div>
+
+    <div id="flowTab" hidden>
 
     <div id="flowListView">
       <h2>計算フロー</h2>
@@ -209,6 +264,7 @@
       <p class="hint center" id="flowKeyHint">キーボード: 1〜4 で選択、Enter で次のステップへ</p>
 
       <div class="card" id="flowSummaryCard" hidden></div>
+    </div>
     </div>
 
   </section>
@@ -354,6 +410,16 @@
     <div class="stat-grid" id="statsSummary"></div>
 
     <div class="card">
+      <h3>合格の見込み</h3>
+      <div id="statsPredict"></div>
+    </div>
+
+    <div class="card">
+      <h3>間違えた理由の傾向</h3>
+      <div id="reasonStats"></div>
+    </div>
+
+    <div class="card">
       <h3>学習カレンダー(直近12週)</h3>
       <div class="heatmap" id="heatmap"></div>
       <div class="heatmap-legend"><span>少</span><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><span>多</span></div>
@@ -378,8 +444,15 @@
   <!-- ============ 用語・公式 ============ -->
   <section class="screen" id="screen-glossary">
     <h2>用語・公式集</h2>
-    <input type="search" id="glossarySearch" class="search-input" placeholder="キーワードで絞り込む(例: 稼働率、RAID、正規化)">
-    <div id="glossaryList"></div>
+    <div class="chip-group" id="glossaryMode">
+      <button class="chip is-active" data-mode="list">📄 一覧</button>
+      <button class="chip" data-mode="cards">🃏 暗記カード</button>
+    </div>
+    <div id="glossaryListView">
+      <input type="search" id="glossarySearch" class="search-input" placeholder="キーワードで絞り込む(例: 稼働率、RAID、正規化)">
+      <div id="glossaryList"></div>
+    </div>
+    <div id="flashBox" hidden></div>
   </section>
 
   <!-- ============ 設定 ============ -->
@@ -411,6 +484,37 @@
         <label for="instantFeedback">演習モードで即時に正誤を表示</label>
         <input type="checkbox" id="instantFeedback" checked>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>🤖 AI 採点(Google Gemini)</h3>
+      <p class="muted">午後演習の記述式の解答を、Gemini API で採点・講評できます。API キーは Google AI Studio で発行してください。</p>
+      <div class="form-row">
+        <label for="aiEnabled">AI 採点を使う</label>
+        <input type="checkbox" id="aiEnabled">
+      </div>
+      <div class="form-row form-row-wide">
+        <label for="aiKey">API キー</label>
+        <div class="ai-key-row">
+          <input type="password" id="aiKey" class="text-input" autocomplete="off" spellcheck="false" placeholder="AIza…">
+          <button class="btn btn-ghost btn-sm" id="aiKeyShow" type="button">表示</button>
+        </div>
+      </div>
+      <div class="form-row form-row-wide">
+        <label for="aiModel">モデル</label>
+        <div class="ai-key-row">
+          <select id="aiModel"></select>
+          <button class="btn btn-secondary btn-sm" id="aiListBtn" type="button">モデル一覧を取得(接続テスト)</button>
+        </div>
+      </div>
+      <p class="hint" id="aiStatus"></p>
+      <div class="btn-row">
+        <button class="btn btn-danger btn-sm" id="aiClearBtn" type="button">API キーを削除</button>
+      </div>
+      <p class="hint">
+        API キーはこの端末のブラウザにだけ保存され、学習データのエクスポートには含まれません。採点時には、事例の問題文・設問・解答例と、あなたの解答が Google に送信されます。
+        公開ページで使う場合は、Google Cloud コンソールでキーに「HTTP リファラー」の制限(このサイトの URL のみ許可)と、Generative Language API のみの API 制限を付けることをおすすめします。
+      </p>
     </div>
 
     <div class="card">
@@ -462,6 +566,7 @@
 <script src="js/data/sc-textbook.js"></script>
 <script src="js/data/sc-cases.js"></script>
 <script src="js/data/sc-glossary.js"></script>
+<script src="js/data/ap-cases.js"></script>
 <script src="js/exam.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/srs.js"></script>
@@ -473,7 +578,12 @@
 <script src="js/visuals/systems.js"></script>
 <script src="js/visuals/business.js"></script>
 <script src="js/visuals/security.js"></script>
+<script src="js/ai.js"></script>
 <script src="js/cases.js"></script>
+<script src="js/drill-gen.js"></script>
+<script src="js/drill.js"></script>
+<script src="js/planner.js"></script>
+<script src="js/flashcards.js"></script>
 <script src="js/textbook.js"></script>
 <script src="js/app.js"></script>
 </body>

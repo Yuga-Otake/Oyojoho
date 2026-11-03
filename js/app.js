@@ -75,7 +75,8 @@
     global.scrollTo(0, 0);
     if (name === 'home') renderHome();
     if (name === 'stats') renderStats();
-    if (name === 'flow' && !global.FlowMode.isRunning()) global.FlowMode.renderList();
+    if (name === 'flow') global.DrillMode.onShow();
+    if (name === 'glossary' && !$('flashBox').hidden) global.Flashcards.open();
     if (name === 'practice') updatePoolInfo();
     if (name === 'textbook') global.Textbook.renderScreen();
     if (name === 'cases' && !global.CaseMode.isOpen()) global.CaseMode.renderList();
@@ -101,8 +102,8 @@
 
     var hasFlows = (global.FLOW_BANK || []).length > 0;
     var hasCases = (global.CASE_BANK || []).length > 0;
-    $('navFlow').hidden = !hasFlows;
-    $('flowHomeCard').hidden = !hasFlows;
+    $('navFlow').hidden = !hasFlows && !global.DrillGen.forExam(EXAM.id).length;
+    $('flowHomeCard').hidden = $('navFlow').hidden;
     $('navCases').hidden = !hasCases;
     $('caseHomeCard').hidden = !hasCases;
 
@@ -156,14 +157,14 @@
         : '今日の復習はありません。未着手が ' + neverSeen + ' 問残っています。');
     $('startReviewBtn').disabled = due.length === 0;
 
-    var flows = global.FLOW_BANK || [];
-    var flowDone = flows.filter(function (f) {
-      var r = state.flows[f.id];
-      return r && r.attempts > 0;
-    }).length;
-    $('flowHomeInfo').textContent = flowDone === 0
-      ? '計算問題を迷いどころごとの選択に分解して解き進めます。'
-      : flows.length + '件中 ' + flowDone + '件に挑戦済みです。';
+    var dtypes = global.DrillMode.types();
+    var weakTypes = dtypes.filter(function (t) { return global.DrillMode.isWeak(t.id); });
+    var triedTypes = dtypes.filter(function (t) { return global.DrillMode.stats(t.id).n > 0; });
+    $('flowHomeInfo').textContent = triedTypes.length === 0
+      ? '数値が毎回変わる ' + dtypes.length + ' 型の計算問題で、解き方の型と速さを身につけます。'
+      : dtypes.length + '型中 ' + triedTypes.length + '型に挑戦済み。' + (weakTypes.length ? '苦手な型: ' + weakTypes.slice(0, 2).map(function (t) { return t.title; }).join('、') : '苦手な型はありません。');
+
+    renderPlan();
 
     var cases = global.CASE_BANK || [];
     var caseDone = cases.filter(function (c) { var r = (state.cases || {})[c.id]; return r && r.attempts > 0; }).length;
@@ -339,6 +340,7 @@
         lessonBox.appendChild(lb);
         if (!ok) lessonBox.appendChild(el('span', 'hint', '間違えた問題は「教科書 › 間違いノート」にまとまります。'));
       }
+      if (!ok) lessonBox.appendChild(reasonChips(q.id));
     } else {
       fb.hidden = true;
     }
@@ -484,6 +486,7 @@
       var lb = global.Textbook.lessonButton(item.question, ok ? '教科書で確認' : '教科書で復習する',
         { chosenText: (!ok && s.answers[i] !== null) ? item.choices[s.answers[i]] : null });
       if (lb) detail.appendChild(lb);
+      if (!ok && s.answers[i] !== null) detail.appendChild(reasonChips(item.question.id));
       d.appendChild(detail);
       if (!ok) d.open = true;
       list.appendChild(d);
@@ -494,6 +497,228 @@
     $('retryWrongBtn').disabled = wrongIds.length === 0;
     $('toNotebookBtn').hidden = wrongIds.length === 0;
     $('retryWrongBtn').dataset.ids = wrongIds.join(',');
+  }
+
+  /* ============ 間違えた理由 ============ */
+  var REASONS = [
+    ['knowledge', '知識不足', '教科書の該当単元で要点と用語を覚え直し、体感ビジュアルで仕組みを確かめましょう。'],
+    ['calc', '計算ミス', '計算ドリルで同じ型を数値を変えて繰り返し、手順を体に覚えさせましょう。'],
+    ['misread', '問題文の読み違い', '「適切でないもの」「最も」「〜以外」などの条件に印を付けてから選択肢を読みましょう。'],
+    ['confuse', '用語の混同', '似た用語は教科書の表や「ひっかけ注意」で違いを比べて覚えましょう。暗記カードも有効です。'],
+    ['careless', 'ケアレスミス', '選んだ後に、問われていることと選択肢をもう一度照らし合わせる習慣をつけましょう。']
+  ];
+
+  /** 「なぜ間違えた?」のタグ選択 */
+  function reasonChips(qid) {
+    var wrap = el('div', 'reason-box');
+    wrap.appendChild(el('span', 'reason-label', 'なぜ間違えた?'));
+    var card = global.AppStorage.card(qid);
+    var cur = card.lastReason && card.lastReasonAt && card.lastReasonAt >= (card.lastWrongAt || 0) ? card.lastReason : null;
+    REASONS.forEach(function (r) {
+      var b = el('button', 'chip chip-sm' + (cur === r[0] ? ' is-active' : ''), r[1]);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        var c = global.AppStorage.card(qid);
+        c.reasons = c.reasons || {};
+        var prev = c.lastReason && c.lastReasonAt >= (c.lastWrongAt || 0) ? c.lastReason : null;
+        if (prev) c.reasons[prev] = Math.max(0, (c.reasons[prev] || 0) - 1);
+        c.reasons[r[0]] = (c.reasons[r[0]] || 0) + 1;
+        c.lastReason = r[0];
+        c.lastReasonAt = Date.now();
+        global.AppStorage.save();
+        Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function (x) { x.classList.toggle('is-active', x === b); });
+        tip.textContent = '💡 ' + r[2];
+      });
+      wrap.appendChild(b);
+    });
+    var tip = el('p', 'hint reason-tip', cur ? '💡 ' + REASONS.filter(function (r) { return r[0] === cur; })[0][2] : '理由を記録すると、統計画面で自分のミスの傾向がわかります。');
+    wrap.appendChild(tip);
+    return wrap;
+  }
+
+  function renderReasonStats() {
+    var box = $('reasonStats');
+    box.innerHTML = '';
+    var tally = {};
+    QUESTIONS.forEach(function (q) {
+      var c = state.cards[q.id];
+      if (!c || !c.reasons) return;
+      Object.keys(c.reasons).forEach(function (k) { tally[k] = (tally[k] || 0) + c.reasons[k]; });
+    });
+    var total = Object.keys(tally).reduce(function (a, k) { return a + tally[k]; }, 0);
+    if (!total) {
+      box.appendChild(el('p', 'empty', '演習で間違えたときに「なぜ間違えた?」を選ぶと、ここに傾向が表示されます。'));
+      return;
+    }
+    var top = null;
+    REASONS.forEach(function (r) {
+      var nn = tally[r[0]] || 0;
+      if (!top || nn > (tally[top[0]] || 0)) top = r;
+      box.appendChild(barItem(r[1], nn / total, nn ? Math.round(total) : 0, ''));
+      var last = box.lastChild;
+      last.querySelector('.n').textContent = nn + '回(' + pct(nn / total) + '%)';
+      last.querySelector('.bar-fill').className = 'bar-fill reason';
+      last.querySelector('.bar-fill').style.width = pct(nn / total) + '%';
+    });
+    box.appendChild(el('p', 'reason-advice', '最も多いのは「' + top[1] + '」。' + top[2]));
+  }
+
+  /* ============ 合格の見込みと学習計画 ============ */
+  function startFieldPractice(field) {
+    startSession({ mode: 'practice', category: 'all', fields: [field], count: 10, order: 'weak', difficulty: 0, ids: null });
+  }
+
+  function scoreMeter(label, score, note) {
+    var m = el('div', 'meter');
+    var head = el('div', 'meter-head');
+    head.appendChild(el('span', 'meter-label', label));
+    head.appendChild(el('span', 'meter-score ' + (score === null ? 'none' : score >= 60 ? 'ok' : 'ng'), score === null ? '未挑戦' : '予測 ' + score + '点'));
+    m.appendChild(head);
+    var track = el('div', 'meter-track');
+    var fill = el('div', 'meter-fill ' + (score === null ? '' : score >= 60 ? 'ok' : 'ng'));
+    fill.style.width = (score || 0) + '%';
+    track.appendChild(fill);
+    var line = el('div', 'meter-line');
+    line.style.left = '60%';
+    line.title = '合格基準 60点';
+    track.appendChild(line);
+    m.appendChild(track);
+    if (note) m.appendChild(el('div', 'meter-note', note));
+    return m;
+  }
+
+  function planOptions() {
+    var key = global.AppStorage.todayKey();
+    var weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+    var cases = global.CASE_BANK || [];
+    var dtypes = global.DrillMode.types();
+    var weak = dtypes.filter(function (t) { return global.DrillMode.isWeak(t.id); });
+    var untried = !weak.length;
+    if (untried) weak = dtypes.filter(function (t) { return !global.DrillMode.stats(t.id).n; });
+    return {
+      weakIsUntried: untried,
+      weakDrills: weak.map(function (t) { return t.title; }),
+      drillToday: (state.drillDays || {})[key] || 0,
+      cases: cases,
+      casesThisWeek: cases.filter(function (c) { var r = (state.cases || {})[c.id]; return r && r.lastAt && r.lastAt >= weekAgo; }).length
+    };
+  }
+
+  function renderPlan() {
+    var box = $('homePlan');
+    box.innerHTML = '';
+    box.appendChild(el('h3', '', '🎯 合格への道のり'));
+    var am = global.Planner.predictAM(QUESTIONS, state, EXAM);
+    var pm = global.Planner.predictPM(global.CASE_BANK || [], state, EXAM);
+    var meters = el('div', 'meters');
+    meters.appendChild(scoreMeter(EXAM.amLabel || '午前', am.score, am.reliable ? null : 'まだ解いた問題が少ないので参考値です(着手 ' + pct(am.coverage) + '%)'));
+    if (pm) meters.appendChild(scoreMeter('午後', pm.score, pm.score === null ? '午後演習の事例に挑戦すると予測できます' : (pm.missing ? 'あと ' + pm.missing + ' 分野(事例)に挑戦すると予測が安定します' : null)));
+    box.appendChild(meters);
+
+    if (am.gains.length) {
+      var g = el('div', 'gains');
+      g.appendChild(el('span', 'gains-label', '次の一手(伸ばすと効果が大きい分野):'));
+      am.gains.forEach(function (f) {
+        var b = el('button', 'chip chip-sm gain-chip', f.field + ' +' + Math.round(f.gain * 10) / 10 + '点');
+        b.type = 'button';
+        b.title = f.field + ' を10問演習する';
+        b.addEventListener('click', function () { startFieldPractice(f.field); });
+        g.appendChild(b);
+      });
+      box.appendChild(g);
+    }
+
+    var planBox = el('div', 'plan');
+    var p = global.Planner.plan(QUESTIONS, state, EXAM, planOptions());
+    var editing = !p;
+    function dateEditor() {
+      var row = el('div', 'plan-date');
+      row.appendChild(el('label', '', '試験日'));
+      var inp = el('input', 'text-input');
+      inp.type = 'date';
+      inp.value = (state.settings.examDates || {})[EXAM.id] || '';
+      row.appendChild(inp);
+      var save = el('button', 'btn btn-primary btn-sm', '設定');
+      save.type = 'button';
+      save.addEventListener('click', function () {
+        if (!inp.value) { toast('試験日を選んでください。'); return; }
+        state.settings.examDates = state.settings.examDates || {};
+        state.settings.examDates[EXAM.id] = inp.value;
+        global.AppStorage.save();
+        renderPlan();
+      });
+      row.appendChild(save);
+      return row;
+    }
+    if (editing) {
+      planBox.appendChild(el('p', 'muted', '試験日を設定すると、残り日数から今日やる問題数を割り振ります。'));
+      planBox.appendChild(dateEditor());
+    } else {
+      var head = el('div', 'plan-head');
+      var dd = p.date.split('-');
+      head.appendChild(el('span', 'plan-days', p.days >= 0 ? '📅 試験まで ' + p.days + ' 日' : '📅 試験日を過ぎました'));
+      head.appendChild(el('span', 'plan-date-label', dd[0] + '/' + Number(dd[1]) + '/' + Number(dd[2]) + (p.phase === 'final' ? ' ・直前期' : '')));
+      var chg = el('button', 'btn btn-ghost btn-sm', '変更');
+      chg.type = 'button';
+      chg.addEventListener('click', function () { chg.replaceWith(dateEditor()); });
+      head.appendChild(chg);
+      planBox.appendChild(head);
+      if (p.phase === 'after') {
+        planBox.appendChild(el('p', 'muted', '次の試験日を設定してください。'));
+      } else {
+        planBox.appendChild(el('div', 'plan-sub', '今日やること'));
+        p.items.forEach(function (it) {
+          var row = el('div', 'plan-item');
+          var done = Math.min(it.done, it.target);
+          row.appendChild(el('span', 'plan-label', (it.done >= it.target ? '✅ ' : '') + it.label));
+          row.appendChild(el('span', 'plan-count', it.done + ' / ' + it.target + ' ' + it.unit));
+          var track = el('div', 'bar-track');
+          var fill = el('div', 'bar-fill ' + (it.done >= it.target ? 'high' : 'mid'));
+          fill.style.width = (done / it.target * 100) + '%';
+          track.appendChild(fill);
+          row.appendChild(track);
+          row.appendChild(el('span', 'plan-note', it.note));
+          planBox.appendChild(row);
+        });
+      }
+    }
+    box.appendChild(planBox);
+  }
+
+  function renderPredictStats() {
+    var box = $('statsPredict');
+    box.innerHTML = '';
+    var am = global.Planner.predictAM(QUESTIONS, state, EXAM);
+    box.appendChild(scoreMeter((EXAM.amLabel || '午前') + 'の予測', am.score, am.reliable ? null : '参考値(着手 ' + pct(am.coverage) + '%)'));
+    am.categories.forEach(function (c) {
+      var it = barItem(c.category + '(本番 約' + c.weight + '問)', c.est, 1, '');
+      it.querySelector('.n').textContent = '正解見込み ' + pct(c.est) + '%';
+      box.appendChild(it);
+    });
+    if (am.gains.length) {
+      box.appendChild(el('h4', 'sub-h', '得点を伸ばしやすい分野'));
+      am.gains.forEach(function (f) {
+        var row = el('div', 'weak-item');
+        row.appendChild(el('span', 'q', f.field + '(本番 約' + Math.round(f.expected * 10) / 10 + '問・正解見込み ' + pct(f.est) + '%)'));
+        row.appendChild(el('span', 'rate gain', '+' + Math.round(f.gain * 10) / 10 + '点'));
+        var b = el('button', 'btn btn-secondary btn-sm', '10問演習');
+        b.addEventListener('click', function () { startFieldPractice(f.field); });
+        row.appendChild(b);
+        box.appendChild(row);
+      });
+    }
+    var pm = global.Planner.predictPM(global.CASE_BANK || [], state, EXAM);
+    if (pm) {
+      box.appendChild(el('h4', 'sub-h', '午後(' + EXAM.pm.note + ')'));
+      box.appendChild(scoreMeter('午後の予測', pm.score, pm.score === null ? '午後演習に挑戦すると予測できます' : null));
+      (pm.areas || []).forEach(function (a) {
+        var row = el('div', 'weak-item');
+        row.appendChild(el('span', 'q', a.area + (a.required ? '(必須)' : a.chosen ? '(選択候補)' : '')));
+        row.appendChild(el('span', 'rate' + (a.best >= 60 ? ' ok' : ''), 'ベスト ' + a.best + '点'));
+        box.appendChild(row);
+      });
+    }
+    box.appendChild(el('p', 'hint', '予測は、問題ごとの直近の正誤から「いま解いたら正解できる確率」を見積もり、本番の出題比率で重み付けした目安です。未着手の分野は当てずっぽう(25%)として計算します。'));
   }
 
   /* ============ 統計 ============ */
@@ -519,6 +744,9 @@
     }
 
     // ヒートマップ
+    renderPredictStats();
+    renderReasonStats();
+
     var hm = $('heatmap');
     hm.innerHTML = '';
     global.Stats.heatmapData(state, 12).forEach(function (c) {
@@ -631,6 +859,67 @@
       s.answered + '回 / セッション ' + state.sessions.length + '件';
   }
 
+  /* ============ AI 採点の設定 ============ */
+  function renderAISettings(models) {
+    var c = global.AIGrader.config;
+    $('aiEnabled').checked = c.enabled;
+    $('aiKey').value = c.apiKey;
+    var sel = $('aiModel');
+    var list = models || [];
+    if (!list.some(function (m) { return m.id === c.model; })) list = [{ id: c.model, label: c.model }].concat(list);
+    sel.innerHTML = '';
+    list.forEach(function (m) {
+      var o = doc.createElement('option');
+      o.value = m.id; o.textContent = m.label + (m.label !== m.id ? '(' + m.id + ')' : '');
+      if (m.id === c.model) o.selected = true;
+      sel.appendChild(o);
+    });
+    $('aiStatus').textContent = c.apiKey ? (c.enabled ? 'AI 採点は有効です。午後演習の記述式で「Gemini で採点する」を押せます。' : 'API キーは保存済みです。「AI 採点を使う」をオンにすると使えます。') : 'API キーが未登録です。';
+  }
+
+  function bindAI() {
+    renderAISettings();
+    $('aiKey').addEventListener('change', function () {
+      var v = this.value.trim();
+      global.AIGrader.set({ apiKey: v, enabled: v ? true : global.AIGrader.config.enabled });
+      renderAISettings();
+      if (v) toast('API キーを保存しました(この端末のみ)。');
+    });
+    $('aiEnabled').addEventListener('change', function () {
+      if (this.checked && !global.AIGrader.config.apiKey) { this.checked = false; toast('先に API キーを入力してください。'); return; }
+      global.AIGrader.set({ enabled: this.checked });
+      renderAISettings();
+    });
+    $('aiModel').addEventListener('change', function () { global.AIGrader.set({ model: this.value }); renderAISettings(); });
+    $('aiKeyShow').addEventListener('click', function () {
+      var k = $('aiKey');
+      k.type = k.type === 'password' ? 'text' : 'password';
+      this.textContent = k.type === 'password' ? '表示' : '隠す';
+    });
+    $('aiListBtn').addEventListener('click', function () {
+      var key = $('aiKey').value.trim();
+      if (!key) { toast('API キーを入力してください。'); return; }
+      global.AIGrader.set({ apiKey: key });
+      var b = this;
+      b.disabled = true;
+      $('aiStatus').textContent = '接続しています…';
+      global.AIGrader.listModels().then(function (models) {
+        b.disabled = false;
+        renderAISettings(models);
+        $('aiStatus').textContent = '接続できました。使用できる Gemini のモデル: ' + models.length + '件。採点には高速な Flash 系のモデルがおすすめです。';
+      }, function (e) {
+        b.disabled = false;
+        $('aiStatus').textContent = '接続に失敗しました: ' + e.message;
+      });
+    });
+    $('aiClearBtn').addEventListener('click', function () {
+      if (!global.confirm('保存した API キーを削除しますか?')) return;
+      global.AIGrader.clear();
+      renderAISettings();
+      toast('API キーを削除しました。');
+    });
+  }
+
   function download(filename, text) {
     var blob = new Blob([text], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
@@ -655,6 +944,10 @@
         if (global.CaseMode.isRunning() && b.dataset.screen !== 'cases') {
           if (!global.confirm('午後演習の途中です。中断してもよろしいですか?(この事例の結果は記録されません)')) return;
           global.CaseMode.exit();
+        }
+        if (global.DrillMode.isRunning() && b.dataset.screen !== 'flow') {
+          if (!global.confirm('計算ドリルの途中です。中断してもよろしいですか?(解いた問題の記録は残ります)')) return;
+          global.DrillMode.exit();
         }
         if (global.FlowMode.isRunning() && b.dataset.screen !== 'flow') {
           if (!global.confirm('計算フローの途中です。中断してもよろしいですか?')) return;
@@ -750,6 +1043,16 @@
 
     // 用語集
     $('glossarySearch').addEventListener('input', function () { renderGlossary(this.value); });
+    qsa('#glossaryMode .chip').forEach(function (b) {
+      b.addEventListener('click', function () {
+        qsa('#glossaryMode .chip').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+        var cards = b.dataset.mode === 'cards';
+        $('glossaryListView').hidden = cards;
+        $('flashBox').hidden = !cards;
+        if (cards) global.Flashcards.open();
+      });
+    });
+    bindAI();
 
     // 設定
     $('themeSelect').addEventListener('change', function () { applyTheme(this.value); });
@@ -831,15 +1134,21 @@
     global.Textbook.init({
       getState: function () { return state; },
       canStart: function () {
-        return !(session && !session.finishedAt) && !global.FlowMode.isRunning() && !global.CaseMode.isRunning();
+        return !(session && !session.finishedAt) && !global.FlowMode.isRunning() && !global.CaseMode.isRunning() && !global.DrillMode.isRunning();
       },
       startQuestions: function (ids) {
         session = null;
         startSession({ mode: 'practice', ids: ids, count: 0, order: 'weak' });
       },
       startFlow: function (id) {
+        global.DrillMode.setTab('flow');
         showScreen('flow');
         global.FlowMode.startById(id);
+      },
+      startDrill: function (id) {
+        global.DrillMode.setTab('drill');
+        showScreen('flow');
+        global.DrillMode.startType(id);
       },
       startCase: function (id) {
         showScreen('cases');
@@ -855,6 +1164,18 @@
         global.AppStorage.save();
       }
     });
+    global.DrillMode.init({
+      toast: toast,
+      lessonButton: function (item) { return global.Textbook.lessonButton(item, '教科書で復習'); },
+      onStudied: function (n, ok) {
+        var key = global.AppStorage.todayKey();
+        state.drillDays = state.drillDays || {};
+        state.drillDays[key] = (state.drillDays[key] || 0) + n;
+        global.AppStorage.recordDay(n, ok);
+        global.AppStorage.save();
+      }
+    });
+    global.Flashcards.init();
     global.FlowMode.init({
       lessonButton: function (flow) {
         var b = global.Textbook.lessonButton(flow, '教科書でこの単元を復習');

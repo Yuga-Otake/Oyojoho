@@ -60,6 +60,33 @@
     var list = $('caseList');
     list.innerHTML = '';
     if (!CASES.length) { list.appendChild(el('p', 'empty', 'この試験の午後演習はまだ収録されていません。')); return; }
+
+    // 分野選びの作戦(午後の出題分野がある試験のみ)
+    if (CASES.some(function (c) { return c.area; }) && global.Planner) {
+      var exam = global.CURRENT_EXAM || {};
+      var pm = global.Planner.predictPM(CASES, state(), exam);
+      var box = el('div', 'card area-card');
+      box.appendChild(el('h3', '', '🧭 午後の分野選び'));
+      box.appendChild(el('p', 'muted', (exam.pm && exam.pm.note ? exam.pm.note + '。' : '') + '各分野の事例を解くと、ベストスコアの高い分野を本番の選択候補として提案します。'));
+      var tbl = el('div', 'area-list');
+      var areas = [];
+      CASES.forEach(function (c) { if (areas.indexOf(c.area) < 0) areas.push(c.area); });
+      var info = {};
+      ((pm && pm.areas) || []).forEach(function (a) { info[a.area] = a; });
+      areas.forEach(function (a) {
+        var row = el('div', 'area-row');
+        var req = CASES.some(function (c) { return c.area === a && c.required; });
+        row.appendChild(el('span', 'area-name', a));
+        if (req) row.appendChild(el('span', 'status-chip open', '必須'));
+        else if (info[a] && info[a].chosen) row.appendChild(el('span', 'status-chip done', '選択候補'));
+        row.appendChild(el('span', 'area-score' + (info[a] && info[a].best >= 60 ? ' ok' : ''), info[a] ? 'ベスト ' + info[a].best + '点' : '未挑戦'));
+        tbl.appendChild(row);
+      });
+      box.appendChild(tbl);
+      if (pm && pm.score !== null) box.appendChild(el('p', 'hint', '選択候補で受験した場合の予測: ' + pm.score + '点(合格基準 60点)' + (pm.missing ? '。あと ' + pm.missing + ' 分野に挑戦すると予測が安定します。' : '')));
+      list.appendChild(box);
+    }
+
     CASES.forEach(function (c) {
       var r = state().cases[c.id];
       var card = el('button', 'flow-card');
@@ -72,11 +99,14 @@
       card.appendChild(head);
       card.appendChild(el('p', 'flow-card-desc', c.scenario[0]));
       var tags = el('div', 'q-tags');
-      tags.appendChild(el('span', 'tag tag-cat', c.field));
+      tags.appendChild(el('span', 'tag tag-cat', c.area || c.field));
+      if (c.required) tags.appendChild(el('span', 'tag tag-req', '必須'));
       tags.appendChild(el('span', 'tag tag-diff', DIFF_LABELS[c.difficulty] || ''));
       tags.appendChild(el('span', 'tag', '設問' + c.questions.length + '・目安' + c.minutes + '分'));
       var nText = c.questions.filter(function (q) { return q.type === 'text'; }).length;
       if (nText) tags.appendChild(el('span', 'tag', '記述 ' + nText + '問'));
+      var nNum = c.questions.filter(function (q) { return q.type === 'number'; }).length;
+      if (nNum) tags.appendChild(el('span', 'tag', '計算 ' + nNum + '問'));
       card.appendChild(tags);
       card.addEventListener('click', function () { start(c); });
       list.appendChild(card);
@@ -155,11 +185,13 @@
     card.id = 'caseQ' + i;
     var head = el('div', 'case-q-head');
     head.appendChild(el('span', 'case-no', q.no));
-    head.appendChild(el('span', 'tag', q.type === 'text' ? '記述' + (q.limit ? '(' + q.limit + '字以内)' : '') : '選択'));
+    head.appendChild(el('span', 'tag', q.type === 'text' ? '記述' + (q.limit ? '(' + q.limit + '字以内)' : '') : q.type === 'number' ? '計算' : '選択'));
     head.appendChild(el('span', 'case-pts', points(cur.c) + '点'));
     card.appendChild(head);
     card.appendChild(el('p', 'q-text', q.prompt));
-    if (q.type === 'choice') renderChoice(card, q, i); else renderText(card, q, i);
+    if (q.type === 'choice') renderChoice(card, q, i);
+    else if (q.type === 'number') renderNumber(card, q, i);
+    else renderText(card, q, i);
     return card;
   }
 
@@ -255,6 +287,8 @@
     if (lb) { var lw = el('div', 'feedback-lesson'); lw.appendChild(lb); fb.appendChild(lw); }
     card.appendChild(fb);
 
+    card.appendChild(aiBox(q, i));
+
     var gradeBox = el('div', 'case-grade');
     gradeBox.appendChild(el('span', 'case-grade-label', '自己採点:'));
     var suggest = !q.keywords || !q.keywords.length ? null : nHit === q.keywords.length ? 'full' : nHit > 0 ? 'half' : 'zero';
@@ -266,6 +300,122 @@
     });
     if (cur.grades[i] === null && suggest) gradeBox.appendChild(el('span', 'hint', '観点の照合からの目安: ' + GRADES[suggest].label));
     card.appendChild(gradeBox);
+  }
+
+  /* ---------- 計算設問 ---------- */
+  function parseNum(s) {
+    var v = String(s || '').normalize('NFKC').replace(/[,\s]/g, '').replace(/[^0-9.+\-eE]/g, '');
+    return v === '' ? NaN : Number(v);
+  }
+
+  function renderNumber(card, q, i) {
+    var answered = cur.answers[i] !== null;
+    var row = el('div', 'case-num-row');
+    var inp = el('input', 'case-num');
+    inp.type = 'text';
+    inp.inputMode = 'decimal';
+    inp.placeholder = '数値';
+    inp.value = answered ? cur.answers[i] : '';
+    inp.disabled = answered;
+    row.appendChild(inp);
+    if (q.unit) row.appendChild(el('span', 'case-unit', q.unit));
+    card.appendChild(row);
+    if (!answered) {
+      var b = el('button', 'btn btn-primary btn-sm', '解答する');
+      b.type = 'button';
+      var submit = function () {
+        var v = parseNum(inp.value);
+        if (isNaN(v)) { ctx.toast('数値を入力してください。'); return; }
+        cur.answers[i] = inp.value;
+        var tol = q.tol !== undefined ? q.tol : Math.max(1e-9, Math.abs(q.answer) * 0.005);
+        cur.grades[i] = Math.abs(v - q.answer) <= tol ? 'full' : 'zero';
+        refresh(i);
+      };
+      b.addEventListener('click', submit);
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+      var r2 = el('div', 'btn-row');
+      r2.appendChild(b);
+      card.appendChild(r2);
+      return;
+    }
+    var ok = cur.grades[i] === 'full';
+    card.appendChild(feedback(ok ? '正解' : '不正解(正解は ' + q.answer + (q.unit || '') + ')', ok ? 'ok' : 'ng', q));
+  }
+
+  /* ---------- AI 採点(Gemini) ---------- */
+  function aiBox(q, i) {
+    var box = el('div', 'ai-box');
+    var AI = global.AIGrader;
+    if (!AI || !AI.ready()) {
+      var p = el('p', 'hint ai-hint', '設定画面で Gemini の API キーを登録すると、この記述を AI に採点してもらえます。');
+      box.appendChild(p);
+      return box;
+    }
+    cur.ai = cur.ai || {};
+    var st = cur.ai[i] || { status: 'idle' };
+    if (st.status === 'idle' || st.status === 'error') {
+      var b = el('button', 'btn btn-ai btn-sm', st.status === 'error' ? '🤖 もう一度 AI で採点する' : '🤖 Gemini で採点する');
+      b.type = 'button';
+      b.addEventListener('click', function () { runAI(q, i); });
+      box.appendChild(b);
+      if (st.status === 'error') box.appendChild(el('p', 'ai-error', st.error));
+      return box;
+    }
+    if (st.status === 'loading') {
+      box.appendChild(el('div', 'ai-loading', '🤖 採点中… (' + AI.config.model + ')'));
+      return box;
+    }
+    var r = st.result;
+    var head = el('div', 'ai-head');
+    head.appendChild(el('span', 'ai-badge', 'AI 採点'));
+    head.appendChild(el('span', 'ai-score ' + r.grade, r.score + '点 / 100 — ' + GRADES[r.grade].label));
+    box.appendChild(head);
+    if (r.criteria.length) {
+      var ul = el('ul', 'case-kw');
+      r.criteria.forEach(function (c) {
+        var li = el('li', c.met ? 'hit' : 'miss');
+        li.appendChild(el('span', 'ck', c.met ? '✓' : '✕'));
+        var tx = el('span');
+        tx.appendChild(el('b', '', c.point));
+        if (c.comment) tx.appendChild(document.createTextNode(' — ' + c.comment));
+        li.appendChild(tx);
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    if (r.feedback) { box.appendChild(el('h4', '', '講評')); box.appendChild(el('p', '', r.feedback)); }
+    if (r.improved) { box.appendChild(el('h4', '', 'あなたの解答をもとにした改善例')); box.appendChild(el('p', 'case-model', r.improved)); }
+    var row = el('div', 'btn-row');
+    var adopt = el('button', 'btn btn-primary btn-sm', cur.grades[i] === r.grade ? '✓ AI の採点を採用済み' : 'AI の採点(' + GRADES[r.grade].label + ')を採用する');
+    adopt.type = 'button';
+    adopt.disabled = cur.grades[i] === r.grade;
+    adopt.addEventListener('click', function () { cur.grades[i] = r.grade; refresh(i); });
+    row.appendChild(adopt);
+    box.appendChild(row);
+    box.appendChild(el('p', 'hint', 'AI の採点は目安です。採点の観点と解説も見て、納得できなければ下の自己採点で上書きしてください。(' + r.model + ')'));
+    return box;
+  }
+
+  function runAI(q, i) {
+    cur.ai = cur.ai || {};
+    cur.ai[i] = { status: 'loading' };
+    refresh(i);
+    var c = cur.c, answer = cur.answers[i];
+    var token = cur;
+    global.AIGrader.grade({
+      examName: (global.CURRENT_EXAM || {}).name || '',
+      caseTitle: c.title, scenario: c.scenario, materials: c.materials,
+      no: q.no, prompt: q.prompt, limit: q.limit, model: q.model, keywords: q.keywords, explanation: q.explanation,
+      answer: answer, answerLength: countChars(answer)
+    }).then(function (r) {
+      if (cur !== token) return;
+      cur.ai[i] = { status: 'done', result: r };
+      refresh(i);
+    }, function (e) {
+      if (cur !== token) return;
+      cur.ai[i] = { status: 'error', error: e.message };
+      refresh(i);
+    });
   }
 
   function feedback(head, cls, q) {
