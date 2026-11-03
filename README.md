@@ -71,6 +71,12 @@ open index.html          # macOS (Windows は start、Linux は xdg-open)
 npx http-server . -p 8080    # → http://localhost:8080
 ```
 
+### スマートフォンのホーム画面に追加する(アプリとして使う)
+
+公開 URL をスマートフォンのブラウザで開き、iPhone は Safari の「共有 → ホーム画面に追加」、Android は Chrome の「アプリをインストール」(または「ホーム画面に追加」)を選びます。
+ホーム画面のアイコンから全画面で起動し、一度開いたページはオフラインでも使えます(`manifest.webmanifest` と `sw.js`)。
+アイコンの元データは `icons/icon.svg`(角丸)と `icons/icon-maskable.svg`(Android の切り抜き用)です。
+
 ### GitHub Pages への公開
 
 `.github/workflows/pages.yml` により、このブランチへ push するたびに GitHub Pages へ自動デプロイされます。
@@ -97,6 +103,9 @@ npx http-server . -p 8080    # → http://localhost:8080
 ```
 .
 ├── index.html                      画面のマークアップ
+├── manifest.webmanifest            ホーム画面に追加したときの設定(アプリ名・アイコン)
+├── sw.js                           オフライン対応の Service Worker
+├── icons/                          アプリのアイコン(SVG と各サイズの PNG)
 ├── css/
 │   └── style.css                   スタイル(テーマ変数・レスポンシブ)
 └── js/
