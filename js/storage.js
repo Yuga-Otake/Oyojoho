@@ -14,10 +14,12 @@
       cards: {},          // 問題ID -> 学習カード(SRS情報 + 正誤回数)
       flows: {},          // フローID -> 計算フローの成績
       lessons: {},        // 教科書の節ID -> {readAt, visualAt}(復習ステップの記録)
+      cases: {},          // 午後演習の事例ID -> {attempts, best, last, lastAt, answers}
       sessions: [],       // 直近のセッション結果
       daily: {},          // 'YYYY-MM-DD' -> {answered, correct}
       streak: { current: 0, best: 0, lastDate: null },
       settings: {
+        exam: 'ap',       // 対象の試験(ap / sc)
         theme: 'auto',
         shuffleChoices: true,
         instantFeedback: true

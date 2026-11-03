@@ -13,12 +13,17 @@
 
 <header class="app-header">
   <div class="header-inner">
-    <h1 class="logo"><span class="logo-mark">AP</span> 応用情報 学習アプリ</h1>
+    <h1 class="logo"><span class="logo-mark" id="logoMark">AP</span> <span id="logoText">応用情報 学習アプリ</span></h1>
+    <div class="exam-switch" id="examSwitch" role="group" aria-label="試験の切替え">
+      <button type="button" class="exam-btn" data-exam="ap">応用情報</button>
+      <button type="button" class="exam-btn" data-exam="sc">支援士</button>
+    </div>
     <nav class="nav" id="nav">
       <button class="nav-btn is-active" data-screen="home">ホーム</button>
       <button class="nav-btn" data-screen="practice">演習</button>
       <button class="nav-btn" data-screen="textbook">教科書</button>
-      <button class="nav-btn" data-screen="flow">計算フロー</button>
+      <button class="nav-btn" data-screen="flow" id="navFlow">計算フロー</button>
+      <button class="nav-btn" data-screen="cases" id="navCases">午後演習</button>
       <button class="nav-btn" data-screen="stats">統計</button>
       <button class="nav-btn" data-screen="glossary">用語・公式</button>
       <button class="nav-btn" data-screen="settings">設定</button>
@@ -34,7 +39,8 @@
     <div class="hero">
       <div class="hero-text">
         <h2>今日の学習をはじめましょう</h2>
-        <p class="muted">午前問題を分野別に演習し、間違えた問題は間隔反復で自動的に復習キューへ入ります。</p>
+        <p class="muted" id="heroLead">午前問題を分野別に演習し、間違えた問題は間隔反復で自動的に復習キューへ入ります。</p>
+        <p class="hint" id="examNote"></p>
       </div>
       <div class="streak-badge">
         <div class="streak-num" id="homeStreak">0</div>
@@ -50,25 +56,30 @@
         <p class="muted" id="dueSummary">復習期限の問題を確認しています…</p>
         <button class="btn btn-primary" id="startReviewBtn">復習を開始</button>
       </div>
-      <div class="card action-card action-card-wide">
-        <h3>📖 教科書・間違いノート</h3>
-        <p class="muted" id="notebookSummary">分野ごとの解説と、さわって理解できる体感ビジュアルを収録しています。</p>
-        <button class="btn btn-primary" id="notebookBtn" data-target="toc">教科書を開く</button>
-      </div>
       <div class="card action-card">
         <h3>⚡ クイック演習</h3>
         <p class="muted">全分野からランダムに10問。すきま時間の学習に。</p>
         <button class="btn btn-primary" id="quickStartBtn">10問スタート</button>
       </div>
-      <div class="card action-card">
+      <div class="card action-card" id="caseHomeCard">
+        <h3>📝 午後演習(記述式)</h3>
+        <p class="muted" id="caseHomeInfo">事例を読んで記述式の設問に答え、解答例と採点の観点で自己採点します。</p>
+        <button class="btn btn-secondary" id="caseStartBtn">事例を選ぶ</button>
+      </div>
+      <div class="card action-card" id="flowHomeCard">
         <h3>🧮 計算フロー</h3>
         <p class="muted" id="flowHomeInfo">計算問題を迷いどころごとの選択に分解して解き進めます。</p>
         <button class="btn btn-secondary" id="flowStartBtn">フローを選ぶ</button>
       </div>
       <div class="card action-card">
         <h3>📝 模擬試験</h3>
-        <p class="muted">本番形式で時間を計って挑戦。終了後にまとめて採点します。</p>
+        <p class="muted" id="mockInfo">本番形式で時間を計って挑戦。終了後にまとめて採点します。</p>
         <button class="btn btn-secondary" id="mockStartBtn">模擬試験の設定へ</button>
+      </div>
+      <div class="card action-card action-card-wide">
+        <h3>📖 教科書・間違いノート</h3>
+        <p class="muted" id="notebookSummary">分野ごとの解説と、さわって理解できる体感ビジュアルを収録しています。</p>
+        <button class="btn btn-primary" id="notebookBtn" data-target="toc">教科書を開く</button>
       </div>
     </div>
 
@@ -96,9 +107,6 @@
       <h3>出題分野</h3>
       <div class="chip-group" id="categoryGroup">
         <button class="chip is-active" data-category="all">すべて</button>
-        <button class="chip" data-category="テクノロジ系">テクノロジ系</button>
-        <button class="chip" data-category="マネジメント系">マネジメント系</button>
-        <button class="chip" data-category="ストラテジ系">ストラテジ系</button>
       </div>
       <div class="field-select" id="fieldSelect"></div>
     </div>
@@ -140,6 +148,7 @@
           <option value="10">10分</option>
           <option value="20">20分</option>
           <option value="30" selected>30分</option>
+          <option value="40">40分</option>
           <option value="60">60分</option>
         </select>
       </div>
@@ -202,6 +211,37 @@
       <div class="card" id="flowSummaryCard" hidden></div>
     </div>
 
+  </section>
+
+  <!-- ============ 午後演習 ============ -->
+  <section class="screen" id="screen-cases">
+    <div id="caseListView">
+      <h2>午後演習(記述式)</h2>
+      <p class="muted">
+        本試験の午後問題と同じく、事例を読んで設問に答えます。記述式は解答を書いて確定すると、解答例と「採点の観点」が表示されます。
+        観点のキーワードが含まれているかを自動で照合するので、それを参考に自己採点してください。
+      </p>
+      <div class="stat-grid" id="caseSummary"></div>
+      <div id="caseList" class="flow-list"></div>
+    </div>
+
+    <div id="casePlayerView" hidden>
+      <div class="quiz-top">
+        <div class="progress">
+          <div class="progress-bar"><span id="caseProgressFill"></span></div>
+          <div class="progress-text"><span id="caseProgress"></span></div>
+        </div>
+        <div class="quiz-meta">
+          <span class="timer" id="caseTimer"></span>
+          <button class="btn btn-ghost btn-sm" id="caseExitBtn">一覧へ戻る</button>
+        </div>
+      </div>
+      <div class="case-layout">
+        <aside class="card case-scenario" id="caseScenario"></aside>
+        <div class="case-questions" id="caseQuestions"></div>
+      </div>
+      <div class="card" id="caseResult" hidden></div>
+    </div>
   </section>
 
   <!-- ============ 出題中 ============ -->
@@ -349,6 +389,13 @@
     <div class="card">
       <h3>表示</h3>
       <div class="form-row">
+        <label for="examSelect">対象の試験</label>
+        <select id="examSelect">
+          <option value="ap">応用情報技術者試験</option>
+          <option value="sc">情報処理安全確保支援士試験</option>
+        </select>
+      </div>
+      <div class="form-row">
         <label for="themeSelect">テーマ</label>
         <select id="themeSelect">
           <option value="auto">端末の設定に従う</option>
@@ -381,7 +428,7 @@
     <div class="card">
       <h3>このアプリについて</h3>
       <p class="muted">
-        応用情報技術者試験(AP)の午前問題対策アプリです。収録問題は
+        応用情報技術者試験(AP)と情報処理安全確保支援士試験(SC)の対策アプリです。<span id="aboutExam"></span>の収録問題は
         <strong id="totalQuestions">0</strong> 問。試験制度・出題範囲はIPAのシラバスを参照してください。
       </p>
       <p class="muted">問題はシラバスの出題範囲に沿って作成したオリジナル問題です。実際の過去問題そのものではありません。</p>
@@ -411,6 +458,11 @@
 <script src="js/data/textbook-technology.js"></script>
 <script src="js/data/textbook-management.js"></script>
 <script src="js/data/textbook-strategy.js"></script>
+<script src="js/data/sc-questions.js"></script>
+<script src="js/data/sc-textbook.js"></script>
+<script src="js/data/sc-cases.js"></script>
+<script src="js/data/sc-glossary.js"></script>
+<script src="js/exam.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/srs.js"></script>
 <script src="js/stats.js"></script>
@@ -420,6 +472,8 @@
 <script src="js/visuals/basics.js"></script>
 <script src="js/visuals/systems.js"></script>
 <script src="js/visuals/business.js"></script>
+<script src="js/visuals/security.js"></script>
+<script src="js/cases.js"></script>
 <script src="js/textbook.js"></script>
 <script src="js/app.js"></script>
 </body>

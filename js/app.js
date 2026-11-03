@@ -6,6 +6,7 @@
 
   var doc = global.document;
   var QUESTIONS = global.QUESTION_BANK || [];
+  var EXAM = global.CURRENT_EXAM || { id: 'ap', categories: [], mock: { count: 20, minutes: 30 }, passLine: '' };
   var state = global.AppStorage.load();
 
   var session = null;        // 実行中の出題セッション
@@ -77,6 +78,52 @@
     if (name === 'flow' && !global.FlowMode.isRunning()) global.FlowMode.renderList();
     if (name === 'practice') updatePoolInfo();
     if (name === 'textbook') global.Textbook.renderScreen();
+    if (name === 'cases' && !global.CaseMode.isOpen()) global.CaseMode.renderList();
+  }
+
+  /* ============ 試験の切替え ============ */
+  function applyExam() {
+    state.settings.exam = EXAM.id;
+    global.AppStorage.save();
+    doc.title = EXAM.appTitle;
+    $('logoMark').textContent = EXAM.badge;
+    $('logoText').textContent = EXAM.appTitle;
+    $('heroLead').textContent = EXAM.heroLead;
+    $('examNote').textContent = EXAM.examNote;
+    $('mockInfo').textContent = EXAM.mock.label;
+    $('aboutExam').textContent = EXAM.name;
+    $('examSelect').value = EXAM.id;
+    qsa('#examSwitch .exam-btn').forEach(function (b) {
+      b.classList.toggle('is-active', b.dataset.exam === EXAM.id);
+      b.setAttribute('aria-pressed', b.dataset.exam === EXAM.id ? 'true' : 'false');
+    });
+    doc.documentElement.setAttribute('data-exam', EXAM.id);
+
+    var hasFlows = (global.FLOW_BANK || []).length > 0;
+    var hasCases = (global.CASE_BANK || []).length > 0;
+    $('navFlow').hidden = !hasFlows;
+    $('flowHomeCard').hidden = !hasFlows;
+    $('navCases').hidden = !hasCases;
+    $('caseHomeCard').hidden = !hasCases;
+
+    // 出題分野のチップ(試験ごとの大分類)
+    var group = $('categoryGroup');
+    qsa('.chip', group).forEach(function (c) { if (c.dataset.category !== 'all') c.remove(); });
+    var cats = (EXAM.categories || []).filter(function (c) { return QUESTIONS.some(function (q) { return q.category === c; }); });
+    QUESTIONS.forEach(function (q) { if (cats.indexOf(q.category) < 0) cats.push(q.category); });
+    cats.forEach(function (c) {
+      var b = el('button', 'chip', c);
+      b.dataset.category = c;
+      group.appendChild(b);
+    });
+  }
+
+  function requestExamSwitch(id) {
+    if (id === EXAM.id) return;
+    if ((session && !session.finishedAt) || global.FlowMode.isRunning() || global.CaseMode.isRunning()) {
+      if (!global.confirm('演習の途中です。試験を切り替えると中断されます。よろしいですか?')) { $('examSelect').value = EXAM.id; return; }
+    }
+    global.switchExam(id);
   }
 
   /* ============ テーマ ============ */
@@ -117,6 +164,12 @@
     $('flowHomeInfo').textContent = flowDone === 0
       ? '計算問題を迷いどころごとの選択に分解して解き進めます。'
       : flows.length + '件中 ' + flowDone + '件に挑戦済みです。';
+
+    var cases = global.CASE_BANK || [];
+    var caseDone = cases.filter(function (c) { var r = (state.cases || {})[c.id]; return r && r.attempts > 0; }).length;
+    $('caseHomeInfo').textContent = caseDone === 0
+      ? '事例を読んで記述式の設問に答え、解答例と採点の観点で自己採点します。'
+      : cases.length + '事例中 ' + caseDone + '事例に挑戦済みです。';
 
     var nc = global.Textbook.counts();
     var pending = nc.open + nc.reviewing;
@@ -352,6 +405,7 @@
     global.AppStorage.recordDay(answeredCount, sc.correct);
     state.sessions.push({
       at: session.finishedAt,
+      exam: EXAM.id,
       mode: session.mode,
       total: sc.total,
       answered: answeredCount,
@@ -378,7 +432,7 @@
     $('scoreRing').style.background = 'conic-gradient(' + color + ' ' + (p * 3.6) + 'deg, var(--surface-2) 0deg)';
 
     var title, comment;
-    if (accuracy >= 0.8) { title = '合格ラインを超えています'; comment = '午前試験の合格基準は60%です。この調子で出題範囲を広げていきましょう。'; }
+    if (accuracy >= 0.8) { title = '合格ラインを超えています'; comment = EXAM.passLine + 'この調子で出題範囲を広げていきましょう。'; }
     else if (accuracy >= 0.6) { title = '合格ラインに到達'; comment = '基準の60%は超えています。取りこぼした分野を復習して安定させましょう。'; }
     else { title = 'もう一歩'; comment = '間違えた問題は復習キューに入りました。解説を読んでから再挑戦しましょう。'; }
     $('resultTitle').textContent = title;
@@ -457,7 +511,12 @@
       var r = state.flows[f.id];
       return r && r.perfect;
     }).length;
-    grid.appendChild(statTile(flowPerfect + ' / ' + flows.length, '計算フロー ノーミス達成'));
+    if (flows.length) grid.appendChild(statTile(flowPerfect + ' / ' + flows.length, '計算フロー ノーミス達成'));
+    var cases = global.CASE_BANK || [];
+    if (cases.length) {
+      var passed = cases.filter(function (c) { var r = (state.cases || {})[c.id]; return r && r.best >= 60; }).length;
+      grid.appendChild(statTile(passed + ' / ' + cases.length, '午後演習 60点以上'));
+    }
 
     // ヒートマップ
     var hm = $('heatmap');
@@ -507,7 +566,7 @@
     // セッション履歴
     var sl = $('sessionList');
     sl.innerHTML = '';
-    var recent = state.sessions.slice(-10).reverse();
+    var recent = state.sessions.filter(function (r) { return (r.exam || 'ap') === EXAM.id; }).slice(-10).reverse();
     if (recent.length === 0) {
       sl.appendChild(el('p', 'empty', '学習履歴はまだありません。'));
     } else {
@@ -593,6 +652,10 @@
           clearInterval(timerId);
           session = null;
         }
+        if (global.CaseMode.isRunning() && b.dataset.screen !== 'cases') {
+          if (!global.confirm('午後演習の途中です。中断してもよろしいですか?(この事例の結果は記録されません)')) return;
+          global.CaseMode.exit();
+        }
         if (global.FlowMode.isRunning() && b.dataset.screen !== 'flow') {
           if (!global.confirm('計算フローの途中です。中断してもよろしいですか?')) return;
           global.FlowMode.exit();
@@ -616,6 +679,11 @@
       startSession({ mode: 'review', category: 'all', fields: [], count: 0, difficulty: 0 });
     });
     $('flowStartBtn').addEventListener('click', function () { showScreen('flow'); });
+    $('caseStartBtn').addEventListener('click', function () { showScreen('cases'); });
+    qsa('#examSwitch .exam-btn').forEach(function (b) {
+      b.addEventListener('click', function () { requestExamSwitch(b.dataset.exam); });
+    });
+    $('examSelect').addEventListener('change', function () { requestExamSwitch(this.value); });
     $('notebookBtn').addEventListener('click', function () {
       if (this.dataset.target === 'notebook') global.Textbook.showNotebook();
       showScreen('textbook');
@@ -628,8 +696,16 @@
     $('mockStartBtn').addEventListener('click', function () {
       showScreen('practice');
       setMode('exam');
-      $('countSelect').value = '20';
-      cond.count = 20;
+      $('countSelect').value = String(EXAM.mock.count);
+      if ($('countSelect').value !== String(EXAM.mock.count)) {
+        var o = doc.createElement('option');
+        o.value = String(EXAM.mock.count); o.textContent = EXAM.mock.count + '問';
+        $('countSelect').insertBefore(o, $('countSelect').querySelector('option[value="40"]'));
+        $('countSelect').value = String(EXAM.mock.count);
+      }
+      cond.count = EXAM.mock.count;
+      $('timeLimitSelect').value = String(EXAM.mock.minutes);
+      cond.timeLimit = EXAM.mock.minutes;
       updatePoolInfo();
     });
 
@@ -695,6 +771,7 @@
       reader.onload = function () {
         try {
           state = global.AppStorage.importJSON(String(reader.result));
+          state.settings.exam = EXAM.id;
           applyTheme(state.settings.theme);
           renderSettings();
           renderHome();
@@ -709,6 +786,7 @@
     $('resetBtn').addEventListener('click', function () {
       if (!global.confirm('学習データをすべて消去します。元に戻せませんがよろしいですか?')) return;
       state = global.AppStorage.reset();
+      state.settings.exam = EXAM.id;
       applyTheme(state.settings.theme);
       renderSettings();
       renderHome();
@@ -748,11 +826,12 @@
       return;
     }
     applyTheme(state.settings.theme);
+    applyExam();
     bind();
     global.Textbook.init({
       getState: function () { return state; },
       canStart: function () {
-        return !(session && !session.finishedAt) && !global.FlowMode.isRunning();
+        return !(session && !session.finishedAt) && !global.FlowMode.isRunning() && !global.CaseMode.isRunning();
       },
       startQuestions: function (ids) {
         session = null;
@@ -762,7 +841,19 @@
         showScreen('flow');
         global.FlowMode.startById(id);
       },
+      startCase: function (id) {
+        showScreen('cases');
+        global.CaseMode.startById(id);
+      },
       showScreen: showScreen
+    });
+    global.CaseMode.init({
+      toast: toast,
+      lessonButton: function (item) { return global.Textbook.lessonButton(item, '教科書で復習'); },
+      onStudied: function (n, full) {
+        global.AppStorage.recordDay(n, full);
+        global.AppStorage.save();
+      }
     });
     global.FlowMode.init({
       lessonButton: function (flow) {

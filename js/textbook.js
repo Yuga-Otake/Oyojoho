@@ -12,12 +12,14 @@
   var BOOK = global.TEXTBOOK || [];
   var QUESTIONS = global.QUESTION_BANK || [];
   var FLOWS = global.FLOW_BANK || [];
+  var CASES = global.CASE_BANK || [];
   var CHOICE_LABELS = ['ア', 'イ', 'ウ', 'エ'];
 
   var ctx = {
     getState: function () { return global.AppStorage.get(); },
     startQuestions: function () {},
     startFlow: function () {},
+    startCase: function () {},
     canStart: function () { return true; },
     showScreen: function () {}
   };
@@ -65,6 +67,16 @@
     var sec = sectionFor(f);
     if (!sec) return;
     (flowsBySection[sec.id] = flowsBySection[sec.id] || []).push(f);
+  });
+
+  var casesBySection = {};
+  CASES.forEach(function (c) {
+    [c].concat(c.questions || []).forEach(function (q) {
+      var sec = sectionFor(q.field ? q : c);
+      if (!sec) return;
+      var arr = casesBySection[sec.id] = casesBySection[sec.id] || [];
+      if (arr.indexOf(c) < 0) arr.push(c);
+    });
   });
 
   /* ============ 汎用 ============ */
@@ -226,7 +238,8 @@
     // ---- 演習への導線 ----
     var qs = questionsBySection[sec.id] || [];
     var flows = flowsBySection[sec.id] || [];
-    if (qs.length || flows.length) {
+    var cases = casesBySection[sec.id] || [];
+    if (qs.length || flows.length || cases.length) {
       var pr = el('section', 'lesson-practice');
       pr.appendChild(el('h3', '', '🎯 この単元を解いて確かめる'));
       if (qs.length) {
@@ -252,6 +265,9 @@
       }
       flows.forEach(function (f) {
         row.appendChild(btn('🧮 計算フロー: ' + f.title, 'btn-ghost', function () { closeModal(); ctx.startFlow(f.id); }));
+      });
+      cases.forEach(function (c) {
+        row.appendChild(btn('📝 午後演習: ' + c.title, 'btn-ghost', function () { closeModal(); ctx.startCase(c.id); }));
       });
       if (!can) {
         Array.prototype.forEach.call(row.querySelectorAll('button'), function (b) { b.disabled = true; });
