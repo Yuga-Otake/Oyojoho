@@ -12,7 +12,7 @@
   var CHOICE_LABELS = ['ア', 'イ', 'ウ', 'エ'];
   var DIFF_LABELS = { 1: '★☆☆ 基本', 2: '★★☆ 標準', 3: '★★★ 応用' };
 
-  var ctx = { toast: function () {}, onStudied: function () {} };
+  var ctx = { toast: function () {}, onStudied: function () {}, lessonButton: function () { return null; } };
   var cur = null;   // 実行中のフロー
 
   function $(id) { return doc.getElementById(id); }
@@ -268,6 +268,9 @@
     sumBox.appendChild(el('p', '', cur.flow.summary));
     card.appendChild(sumBox);
 
+    var lesson = ctx.lessonButton(cur.flow);
+    if (lesson) card.appendChild(lesson);
+
     var actions = el('div', 'result-actions');
     var again = el('button', 'btn btn-primary', 'もう一度挑戦する');
     again.addEventListener('click', function () { start(cur.flow); });
@@ -297,6 +300,7 @@
     if (c) {
       if (c.toast) ctx.toast = c.toast;
       if (c.onStudied) ctx.onStudied = c.onStudied;
+      if (c.lessonButton) ctx.lessonButton = c.lessonButton;
     }
     $('flowNextBtn').addEventListener('click', next);
     $('flowExitBtn').addEventListener('click', function () {
@@ -321,6 +325,11 @@
   }
 
   global.FlowMode = {
-    init: init, renderList: renderList, exit: exit, isRunning: isRunning, count: FLOWS.length
+    init: init, renderList: renderList, exit: exit, isRunning: isRunning, count: FLOWS.length,
+    startById: function (id) {
+      var f = FLOWS.filter(function (x) { return x.id === id; })[0];
+      if (f) start(f);
+      return !!f;
+    }
   };
 })(window);

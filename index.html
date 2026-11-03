@@ -17,6 +17,7 @@
     <nav class="nav" id="nav">
       <button class="nav-btn is-active" data-screen="home">ホーム</button>
       <button class="nav-btn" data-screen="practice">演習</button>
+      <button class="nav-btn" data-screen="textbook">教科書</button>
       <button class="nav-btn" data-screen="flow">計算フロー</button>
       <button class="nav-btn" data-screen="stats">統計</button>
       <button class="nav-btn" data-screen="glossary">用語・公式</button>
@@ -48,6 +49,11 @@
         <h3>🔁 今日の復習</h3>
         <p class="muted" id="dueSummary">復習期限の問題を確認しています…</p>
         <button class="btn btn-primary" id="startReviewBtn">復習を開始</button>
+      </div>
+      <div class="card action-card action-card-wide">
+        <h3>📖 教科書・間違いノート</h3>
+        <p class="muted" id="notebookSummary">分野ごとの解説と、さわって理解できる体感ビジュアルを収録しています。</p>
+        <button class="btn btn-primary" id="notebookBtn" data-target="toc">教科書を開く</button>
       </div>
       <div class="card action-card">
         <h3>⚡ クイック演習</h3>
@@ -227,6 +233,7 @@
           <h4>解説</h4>
           <p id="explanation"></p>
         </div>
+        <div class="feedback-lesson" id="feedbackLesson"></div>
       </div>
     </div>
 
@@ -265,9 +272,40 @@
 
     <div class="result-actions">
       <button class="btn btn-primary" id="retryWrongBtn">間違えた問題だけ再挑戦</button>
+      <button class="btn btn-secondary" id="toNotebookBtn" hidden>📖 間違いノートで復習</button>
       <button class="btn btn-secondary" id="againBtn">同じ条件でもう一度</button>
       <button class="btn btn-ghost" id="backHomeBtn">ホームへ戻る</button>
     </div>
+  </section>
+
+  <!-- ============ 教科書 ============ -->
+  <section class="screen" id="screen-textbook">
+    <div class="tb-tabs" id="tbTabs" role="tablist">
+      <button class="tb-tab is-active" data-view="toc" role="tab">📖 目次</button>
+      <button class="tb-tab" data-view="notebook" role="tab">✏️ 間違いノート <span class="tb-badge" id="tbNoteBadge" hidden>0</span></button>
+      <button class="tb-tab" data-view="lab" role="tab">🎛 体感ラボ</button>
+    </div>
+
+    <div id="tb-toc">
+      <h2>教科書</h2>
+      <p class="muted">分野ごとに要点・公式・ひっかけ・例題をまとめ、多くの節に「さわって確かめる」体感ビジュアルを付けました。</p>
+      <p class="hint" id="tbProgress"></p>
+      <input type="search" id="tbSearch" class="search-input" placeholder="キーワードで節を探す(例: 稼働率、RAID、署名、EVM)">
+      <div id="tbTocList"></div>
+    </div>
+
+    <div id="tb-notebook" hidden>
+      <h2>間違いノート</h2>
+      <div id="tbNotebookBody"></div>
+    </div>
+
+    <div id="tb-lab" hidden>
+      <h2>体感ラボ</h2>
+      <p class="muted">スライダやボタンを動かして、公式や仕組みを手で確かめるコーナーです。</p>
+      <div id="tbLabBody"></div>
+    </div>
+
+    <div id="tb-reader" hidden></div>
   </section>
 
   <!-- ============ 統計 ============ -->
@@ -354,16 +392,35 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<div class="modal" id="lessonModal" hidden>
+  <div class="modal-backdrop"></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-label="教科書">
+    <div class="modal-bar">
+      <span class="modal-bar-title">📖 教科書</span>
+      <button class="icon-btn" id="lessonModalClose" aria-label="閉じる" title="閉じる (Esc)">✕</button>
+    </div>
+    <div class="modal-body" id="lessonModalBody"></div>
+  </div>
+</div>
+
 <script src="js/data/questions-technology.js"></script>
 <script src="js/data/questions-management.js"></script>
 <script src="js/data/questions-strategy.js"></script>
 <script src="js/data/flows.js"></script>
 <script src="js/data/glossary.js"></script>
+<script src="js/data/textbook-technology.js"></script>
+<script src="js/data/textbook-management.js"></script>
+<script src="js/data/textbook-strategy.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/srs.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/flow.js"></script>
+<script src="js/visuals/core.js"></script>
+<script src="js/visuals/basics.js"></script>
+<script src="js/visuals/systems.js"></script>
+<script src="js/visuals/business.js"></script>
+<script src="js/textbook.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

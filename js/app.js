@@ -76,6 +76,7 @@
     if (name === 'stats') renderStats();
     if (name === 'flow' && !global.FlowMode.isRunning()) global.FlowMode.renderList();
     if (name === 'practice') updatePoolInfo();
+    if (name === 'textbook') global.Textbook.renderScreen();
   }
 
   /* ============ テーマ ============ */
@@ -116,6 +117,15 @@
     $('flowHomeInfo').textContent = flowDone === 0
       ? '計算問題を迷いどころごとの選択に分解して解き進めます。'
       : flows.length + '件中 ' + flowDone + '件に挑戦済みです。';
+
+    var nc = global.Textbook.counts();
+    var pending = nc.open + nc.reviewing;
+    $('notebookSummary').textContent = pending > 0
+      ? '未克服 ' + nc.open + '問・復習中 ' + nc.reviewing + '問。教科書で解説を読み、体感ビジュアルで確かめてから解き直しましょう。'
+      : (nc.done > 0 ? '未克服の問題はありません(克服 ' + nc.done + '問)。教科書で次の単元を予習しましょう。'
+        : '分野ごとの解説と、さわって理解できる体感ビジュアルを収録。間違えた問題はここに集まります。');
+    $('notebookBtn').textContent = pending > 0 ? '間違いノートを開く' : '教科書を開く';
+    $('notebookBtn').dataset.target = pending > 0 ? 'notebook' : 'toc';
 
     var bars = $('homeFieldBars');
     bars.innerHTML = '';
@@ -269,6 +279,13 @@
         ? '正解  (正解は ' + CHOICE_LABELS[item.answerIndex] + ')'
         : '不正解  (正解は ' + CHOICE_LABELS[item.answerIndex] + ')';
       $('explanation').textContent = q.explanation;
+      var lessonBox = $('feedbackLesson');
+      lessonBox.innerHTML = '';
+      var lb = global.Textbook.lessonButton(q, ok ? '教科書で確認' : '教科書で復習する', { chosenText: ok ? null : item.choices[answered] });
+      if (lb) {
+        lessonBox.appendChild(lb);
+        if (!ok) lessonBox.appendChild(el('span', 'hint', '間違えた問題は「教科書 › 間違いノート」にまとまります。'));
+      }
     } else {
       fb.hidden = true;
     }
@@ -288,12 +305,22 @@
     if (session.mode !== 'exam') {
       var item = session.items[i];
       var isCorrect = (ci === item.answerIndex);
-      var card = global.AppStorage.card(item.question.id);
-      global.SRS.update(card, isCorrect);
+      recordAnswer(item, ci);
       global.AppStorage.save();
     }
     renderQuestion();
     if (session.mode === 'exam') next();
+  }
+
+  /** 解答を SRS に反映し、誤答なら間違いノート用に選んだ選択肢を残す */
+  function recordAnswer(item, ci) {
+    var card = global.AppStorage.card(item.question.id);
+    var ok = ci === item.answerIndex;
+    global.SRS.update(card, ok);
+    if (!ok) {
+      card.lastWrongAt = card.lastAt;
+      card.lastWrongChoice = item.choices[ci];
+    }
   }
 
   function next() {
@@ -316,8 +343,7 @@
     if (session.mode === 'exam') {
       session.items.forEach(function (item, i) {
         if (session.answers[i] === null) return; // 未解答は学習記録に含めない
-        var card = global.AppStorage.card(item.question.id);
-        global.SRS.update(card, session.answers[i] === item.answerIndex);
+        recordAnswer(item, session.answers[i]);
       });
     }
 
@@ -401,6 +427,9 @@
       correctP.appendChild(b);
       detail.appendChild(correctP);
       detail.appendChild(el('p', '', item.question.explanation));
+      var lb = global.Textbook.lessonButton(item.question, ok ? '教科書で確認' : '教科書で復習する',
+        { chosenText: (!ok && s.answers[i] !== null) ? item.choices[s.answers[i]] : null });
+      if (lb) detail.appendChild(lb);
       d.appendChild(detail);
       if (!ok) d.open = true;
       list.appendChild(d);
@@ -409,6 +438,7 @@
     var wrongIds = s.items.filter(function (item, i) { return !global.Quiz.isCorrectAt(s, i); })
       .map(function (item) { return item.question.id; });
     $('retryWrongBtn').disabled = wrongIds.length === 0;
+    $('toNotebookBtn').hidden = wrongIds.length === 0;
     $('retryWrongBtn').dataset.ids = wrongIds.join(',');
   }
 
@@ -462,6 +492,8 @@
         var row = el('div', 'weak-item');
         row.appendChild(el('span', 'q', '[' + w.q.field + '] ' + w.q.question));
         row.appendChild(el('span', 'rate', pct(w.accuracy) + '% (' + w.total + '回)'));
+        var lb = global.Textbook.lessonButton(w.q, '教科書');
+        if (lb) row.appendChild(lb);
         wl.appendChild(row);
       });
       var btn = el('button', 'btn btn-secondary btn-sm', '苦手な問題を演習する');
@@ -584,6 +616,15 @@
       startSession({ mode: 'review', category: 'all', fields: [], count: 0, difficulty: 0 });
     });
     $('flowStartBtn').addEventListener('click', function () { showScreen('flow'); });
+    $('notebookBtn').addEventListener('click', function () {
+      if (this.dataset.target === 'notebook') global.Textbook.showNotebook();
+      showScreen('textbook');
+    });
+    $('toNotebookBtn').addEventListener('click', function () {
+      session = null;
+      global.Textbook.showNotebook();
+      showScreen('textbook');
+    });
     $('mockStartBtn').addEventListener('click', function () {
       showScreen('practice');
       setMode('exam');
@@ -678,6 +719,7 @@
     doc.addEventListener('keydown', function (e) {
       var quizVisible = $('screen-quiz').classList.contains('is-active');
       if (!quizVisible || !session) return;
+      if (global.Textbook.isModalOpen()) return;
       if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
 
       if (e.key >= '1' && e.key <= '4') {
@@ -707,7 +749,29 @@
     }
     applyTheme(state.settings.theme);
     bind();
+    global.Textbook.init({
+      getState: function () { return state; },
+      canStart: function () {
+        return !(session && !session.finishedAt) && !global.FlowMode.isRunning();
+      },
+      startQuestions: function (ids) {
+        session = null;
+        startSession({ mode: 'practice', ids: ids, count: 0, order: 'weak' });
+      },
+      startFlow: function (id) {
+        showScreen('flow');
+        global.FlowMode.startById(id);
+      },
+      showScreen: showScreen
+    });
     global.FlowMode.init({
+      lessonButton: function (flow) {
+        var b = global.Textbook.lessonButton(flow, '教科書でこの単元を復習');
+        if (!b) return null;
+        var wrap = el('div', 'flow-lesson');
+        wrap.appendChild(b);
+        return wrap;
+      },
       toast: toast,
       onStudied: function (steps, firstTry) {
         global.AppStorage.recordDay(steps, firstTry);
