@@ -335,7 +335,7 @@
       $('explanation').textContent = q.explanation;
       var lessonBox = $('feedbackLesson');
       lessonBox.innerHTML = '';
-      var lb = global.Textbook.lessonButton(q, ok ? '教科書で確認' : '教科書で復習する', { chosenText: ok ? null : item.choices[answered] });
+      var lb = global.Textbook.lessonButton(q, ok ? '教科書で確認' : '教科書で復習する', ok ? { focusQid: null } : { chosenText: item.choices[answered] });
       if (lb) {
         lessonBox.appendChild(lb);
         if (!ok) lessonBox.appendChild(el('span', 'hint', '間違えた問題は「教科書 › 間違いノート」にまとまります。'));
@@ -492,7 +492,7 @@
       detail.appendChild(correctP);
       detail.appendChild(el('p', '', item.question.explanation));
       var lb = global.Textbook.lessonButton(item.question, ok ? '教科書で確認' : '教科書で復習する',
-        { chosenText: (!ok && s.answers[i] !== null) ? item.choices[s.answers[i]] : null });
+        (!ok && s.answers[i] !== null) ? { chosenText: item.choices[s.answers[i]] } : { focusQid: null });
       if (lb) detail.appendChild(lb);
       if (!ok && s.answers[i] !== null) detail.appendChild(reasonChips(item.question.id));
       d.appendChild(detail);

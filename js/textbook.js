@@ -183,18 +183,20 @@
     if (an) art.appendChild(an);
 
     // ---- 間違えた問題 ----
-    var mistakes = sectionMistakes(sec).filter(function (q) { return mistakeStatus(q) !== 'done' || q.id === opts.focusQid; });
-    if (opts.focusQid) {
-      mistakes.sort(function (a, b) { return (b.id === opts.focusQid) - (a.id === opts.focusQid); });
-      if (!mistakes.some(function (q) { return q.id === opts.focusQid; })) {
-        var fq = QUESTIONS.filter(function (q) { return q.id === opts.focusQid; })[0];
+    // 直前に「間違えた」問題(chosenText がある)だけを強調する。正解したときは強調しない
+    var justWrong = opts.focusQid && opts.chosenText ? opts.focusQid : null;
+    var mistakes = sectionMistakes(sec).filter(function (q) { return mistakeStatus(q) !== 'done' || q.id === justWrong; });
+    if (justWrong) {
+      mistakes.sort(function (a, b) { return (b.id === justWrong) - (a.id === justWrong); });
+      if (!mistakes.some(function (q) { return q.id === justWrong; })) {
+        var fq = QUESTIONS.filter(function (q) { return q.id === justWrong; })[0];
         if (fq) mistakes.unshift(fq);
       }
     }
     if (mistakes.length) {
       var mb = el('section', 'lesson-mistakes');
-      mb.appendChild(el('h3', '', '✏️ あなたが間違えた問題(' + mistakes.length + ')'));
-      mistakes.forEach(function (q) { mb.appendChild(mistakeItem(q, q.id === opts.focusQid, q.id === opts.focusQid ? opts.chosenText : null)); });
+      mb.appendChild(el('h3', '', '✏️ この単元でこれまでに間違えた問題(' + mistakes.length + ')'));
+      mistakes.forEach(function (q) { mb.appendChild(mistakeItem(q, q.id === justWrong, q.id === justWrong ? opts.chosenText : null)); });
       art.appendChild(mb);
       art.appendChild(checklist(sec, opts));
     }
@@ -350,7 +352,7 @@
     var yours = chosenText || c.lastWrongChoice;
     if (yours) {
       var p1 = el('p', 'ans');
-      p1.appendChild(el('span', 'k', 'あなたの解答'));
+      p1.appendChild(el('span', 'k', chosenText ? '今回の解答' : '前回間違えた解答'));
       p1.appendChild(el('span', 'your', yours));
       body.appendChild(p1);
     }
