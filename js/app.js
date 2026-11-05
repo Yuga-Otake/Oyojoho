@@ -340,6 +340,14 @@
         lessonBox.appendChild(lb);
         if (!ok) lessonBox.appendChild(el('span', 'hint', '間違えた問題は「教科書 › 間違いノート」にまとまります。'));
       }
+      var anBox = global.Textbook.analogyFor(q);
+      if (anBox) {
+        var det = el('details', 'analogy-details');
+        det.appendChild(el('summary', '', '🏠 言葉がむずかしい? たとえで理解する'));
+        det.appendChild(anBox);
+        if (!ok) det.open = true;
+        lessonBox.appendChild(det);
+      }
       if (!ok) lessonBox.appendChild(reasonChips(q.id));
     } else {
       fb.hidden = true;

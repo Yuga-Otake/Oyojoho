@@ -1177,3 +1177,30 @@ body.modal-open { overflow: hidden; }
 
 /* hidden 属性は display 指定より常に優先する */
 [hidden] { display: none !important; }
+
+/* やさしい説明と身近なたとえ */
+.lesson-analogy {
+  border-radius: var(--radius); padding: 14px 16px; margin: 0 0 18px;
+  background: var(--warn-soft); border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.lesson-analogy p { margin: 2px 0 0; line-height: 1.9; }
+.an-tag { display: inline-block; font-size: .76rem; font-weight: 700; color: var(--warn); letter-spacing: .03em; }
+.an-plain p { font-weight: 600; }
+.an-map { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.an-map li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.4fr); gap: 8px; align-items: baseline;
+  background: var(--surface); border-radius: var(--radius-sm); padding: 6px 10px; font-size: .9rem;
+}
+.an-real { font-weight: 700; color: var(--primary); overflow-wrap: anywhere; }
+.an-eq { color: var(--text-muted); }
+.an-like { overflow-wrap: anywhere; }
+.an-caution { font-size: .82rem; color: var(--text-muted); }
+.lesson-analogy.compact { margin: 8px 0 0; padding: 12px; }
+.analogy-details { width: 100%; margin-top: 10px; }
+.analogy-details summary { cursor: pointer; font-weight: 600; color: var(--warn); font-size: .9rem; }
+@media (max-width: 640px) {
+  .an-map li { grid-template-columns: 1fr; gap: 0; }
+  .an-eq { display: none; }
+  .an-like::before { content: '→ '; color: var(--text-muted); }
+}

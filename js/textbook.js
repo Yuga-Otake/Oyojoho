@@ -179,6 +179,8 @@
     art.appendChild(crumb);
     art.appendChild(el('h2', 'lesson-title', sec.title));
     if (sec.lead) art.appendChild(rich('p', 'lesson-lead', sec.lead));
+    var an = analogyBox(sec);
+    if (an) art.appendChild(an);
 
     // ---- 間違えた問題 ----
     var mistakes = sectionMistakes(sec).filter(function (q) { return mistakeStatus(q) !== 'done' || q.id === opts.focusQid; });
@@ -457,8 +459,43 @@
     global.scrollTo(0, 0);
   }
 
+  /** やさしい説明と身近なたとえ(js/data/analogies-*.js) */
+  function analogyOf(sec) { return sec && (global.ANALOGIES || {})[sec.id] || null; }
+
+  function analogyBox(sec, compact) {
+    var a = analogyOf(sec);
+    if (!a) return null;
+    var box = el('section', 'lesson-analogy' + (compact ? ' compact' : ''));
+    if (a.plain) {
+      var p = el('div', 'an-plain');
+      p.appendChild(el('span', 'an-tag', '🔰 ひとことで'));
+      p.appendChild(rich('p', '', a.plain));
+      box.appendChild(p);
+    }
+    if (a.text) {
+      var q = el('div', 'an-story');
+      q.appendChild(el('span', 'an-tag', '🏠 身近なたとえ'));
+      q.appendChild(rich('p', '', a.text));
+      box.appendChild(q);
+    }
+    if (a.map && a.map.length) {
+      var ul = el('ul', 'an-map');
+      a.map.forEach(function (m) {
+        var li = el('li');
+        li.appendChild(el('span', 'an-real', m[0]));
+        li.appendChild(el('span', 'an-eq', '='));
+        li.appendChild(el('span', 'an-like', m[1]));
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    if (a.caution) box.appendChild(rich('p', 'an-caution', '⚠ たとえの限界: ' + a.caution));
+    return box;
+  }
+
   function sectionText(sec) {
-    return [sec.title, sec.lead, (sec.body || []).join(' '), (sec.points || []).join(' '), (sec.traps || []).join(' '),
+    var an = analogyOf(sec);
+    return [sec.title, sec.lead, an ? [an.plain, an.text, (an.map || []).map(function (m) { return m.join(' '); }).join(' ')].join(' ') : '', (sec.body || []).join(' '), (sec.points || []).join(' '), (sec.traps || []).join(' '),
       (sec.topics || []).join(' '), sec.chapter.title,
       (sec.formulas || []).map(function (f) { return f.join(' '); }).join(' ')].join(' ').toLowerCase();
   }
@@ -726,6 +763,8 @@
     closeModal: closeModal,
     isModalOpen: isModalOpen,
     sectionFor: sectionFor,
+    /** 問題や設問に対応する節の「たとえ」(解説の下に出す用) */
+    analogyFor: function (item) { return analogyBox(sectionFor(item), true); },
     lessonButton: lessonButton,
     counts: counts,
     sections: sections,
