@@ -55,7 +55,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'bits'
       },
       {
-        id: 'basic-float', title: '浮動小数点と誤差', topics: ['浮動小数点'],
+        id: 'basic-float', visual: 'floaterr', title: '浮動小数点と誤差', topics: ['浮動小数点'],
         lead: '実数は「仮数 × 基数^指数」で近似する。近似ゆえに誤差が生まれる。',
         body: [
           '浮動小数点数は **符号・指数部・仮数部** で表す(IEEE 754 単精度は 1+8+23 ビット)。有効桁数が限られているので、計算の仕方によって次の誤差が起きる。',
@@ -372,7 +372,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         ]
       },
       {
-        id: 'algo-design', title: 'アルゴリズム設計の考え方', topics: ['アルゴリズム設計'],
+        id: 'algo-design', visual: 'dp', title: 'アルゴリズム設計の考え方', topics: ['アルゴリズム設計'],
         lead: '大きな問題を小さな問題に分け、その解をどう組み立てるかで手法が分かれる。',
         body: [
           '**分割統治法** は問題を独立した小問題に分割して解き、結果を統合する(マージソート、クイックソート)。',
@@ -469,7 +469,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'raid'
       },
       {
-        id: 'comp-io', title: '入出力とバス', topics: ['入出力'],
+        id: 'comp-io', visual: 'dma', title: '入出力とバス', topics: ['入出力'],
         lead: 'CPU を待たせずにデータを運ぶ工夫が DMA と割込み。',
         body: [
           '**DMA(Direct Memory Access)** は、CPU を介さずに入出力装置と主記憶の間で直接データを転送する方式。転送中、CPU は別の処理を進められる。',
@@ -566,7 +566,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         ]
       },
       {
-        id: 'sys-virtual', title: '仮想化とクラウド基盤', topics: ['仮想化'],
+        id: 'sys-virtual', visual: 'virt', title: '仮想化とクラウド基盤', topics: ['仮想化'],
         lead: 'ゲスト OS ごと仮想化するか、OS を共有してアプリだけ隔離するか。',
         body: [
           '**ハイパーバイザ型** は物理マシン上で直接ハイパーバイザが動き、その上で複数の **ゲスト OS** を動かす。OS ごと分離できるので異なる OS を混在できるが、OS の分だけ資源を使う。',
@@ -795,7 +795,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'sql'
       },
       {
-        id: 'db-tx', title: 'トランザクションと同時実行制御', topics: ['トランザクション', '同時実行制御'],
+        id: 'db-tx', visual: 'lostupdate', title: 'トランザクションと同時実行制御', topics: ['トランザクション', '同時実行制御'],
         lead: '「全部やるか、全くやらないか」と「同時に動いても順番に動いたのと同じ結果」。',
         body: [
           'トランザクションが満たすべき性質が **ACID 特性**。**原子性(Atomicity)**:全部実行されるか全く実行されないか。**一貫性(Consistency)**:整合性制約を守る。**隔離性(Isolation)**:同時に実行しても逐次実行と同じ結果。**耐久性(Durability)**:コミットした結果は障害でも失われない。',
@@ -859,7 +859,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
     id: 'ch-network', field: 'ネットワーク', category: 'テクノロジ系', icon: '🌐', title: 'ネットワーク',
     sections: [
       {
-        id: 'net-osi', title: 'OSI参照モデルとネットワーク機器', topics: ['OSI参照モデル'],
+        id: 'net-osi', visual: 'encap', title: 'OSI参照モデルとネットワーク機器', topics: ['OSI参照モデル'],
         lead: '機器は「どの層の情報を見て中継するか」で区別する。',
         body: [
           'OSI 参照モデルは通信の機能を7層に分けたもの。下から **物理・データリンク・ネットワーク・トランスポート・セッション・プレゼンテーション・アプリケーション**。',
@@ -905,7 +905,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'subnet'
       },
       {
-        id: 'net-tcp', title: 'TCP と UDP、主なプロトコル', topics: ['プロトコル'],
+        id: 'net-tcp', visual: 'tcpudp', title: 'TCP と UDP、主なプロトコル', topics: ['プロトコル'],
         lead: '確実に届けたいなら TCP、速さ・リアルタイム性重視なら UDP。',
         body: [
           '**TCP** はコネクション型。3ウェイハンドシェイクで接続を確立し、順序制御・再送制御・フロー制御を行う。Web(HTTP/HTTPS)、メール、ファイル転送に使う。',
@@ -944,7 +944,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'transfer'
       },
       {
-        id: 'net-nat', title: 'NAT・NAPT と DHCP・DNS', topics: ['アドレス変換'],
+        id: 'net-nat', visual: 'napt', title: 'NAT・NAPT と DHCP・DNS', topics: ['アドレス変換'],
         lead: '1つのグローバルアドレスを、ポート番号で見分けて大勢で共有する。',
         body: [
           '**NAT** はプライベート IP アドレスとグローバル IP アドレスを **1対1** で変換する。',
@@ -959,7 +959,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         ]
       },
       {
-        id: 'net-routing', title: 'ルーティングと無線LAN', topics: ['ルーティング', '無線LAN'],
+        id: 'net-routing', visual: 'routing', title: 'ルーティングと無線LAN', topics: ['ルーティング', '無線LAN'],
         lead: '経路の選び方は「距離で決める」か「回線の状態で決める」か。',
         body: [
           'ルーティングプロトコルは、**ディスタンスベクタ型**(**RIP**:経由するルータの数=ホップ数が最小の経路)と、**リンクステート型**(**OSPF**:回線速度などのコストから最短経路を計算)に分かれる。組織間の経路制御には **BGP**(パスベクタ型)を使う。',
@@ -1023,7 +1023,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'hash'
       },
       {
-        id: 'sec-pki', title: 'PKI と電子証明書', topics: ['PKI'],
+        id: 'sec-pki', visual: 'certchain', title: 'PKI と電子証明書', topics: ['PKI'],
         lead: '「この公開鍵は本当にこの人のもの」と認証局(CA)が保証する仕組み。',
         body: [
           '公開鍵が本物かどうかを保証するために、**認証局(CA)** が公開鍵と所有者の情報に署名した **ディジタル証明書** を発行する。これを支える仕組みが **PKI(公開鍵基盤)**。',
@@ -1039,7 +1039,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         ]
       },
       {
-        id: 'sec-auth', title: '認証技術', topics: ['認証'],
+        id: 'sec-auth', visual: 'mfa', title: '認証技術', topics: ['認証'],
         lead: '知っているもの・持っているもの・本人そのもの。異なる要素を2つ以上組み合わせるのが多要素認証。',
         body: [
           '認証の要素は **知識**(パスワード、PIN)、**所持**(スマートフォン、IC カード、ハードウェアトークン)、**生体**(指紋、顔、静脈)の3種類。**異なる種類の要素を2つ以上** 組み合わせるのが **多要素認証**。パスワードを2回聞く「二段階」は、要素が同じなので多要素ではない。',
@@ -1077,7 +1077,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'sqli'
       },
       {
-        id: 'sec-device', title: 'セキュリティ機器とネットワーク対策', topics: ['セキュリティ機器'],
+        id: 'sec-device', visual: 'idsroc', title: 'セキュリティ機器とネットワーク対策', topics: ['セキュリティ機器'],
         lead: 'どの層の何を見て通信を止めるのかで機器を区別する。',
         body: [
           '**ファイアウォール** は IP アドレスやポート番号で通信を許可・遮断する(パケットフィルタリング)。',
@@ -1114,7 +1114,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         ]
       },
       {
-        id: 'sec-malware', title: 'マルウェアと組織の対策', topics: ['マルウェア対策'],
+        id: 'sec-malware', visual: 'killchain', title: 'マルウェアと組織の対策', topics: ['マルウェア対策'],
         lead: '技術対策だけでは防げない。人・組織の仕組みを回し続けることが大事。',
         body: [
           'マルウェアには、自己増殖する **ワーム**、正規ソフトを装う **トロイの木馬**、データを暗号化して身代金を要求する **ランサムウェア**、遠隔操作される **ボット** などがある。',

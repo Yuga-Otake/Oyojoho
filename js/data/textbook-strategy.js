@@ -55,7 +55,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
     id: 'ch-strategy', field: '経営戦略', category: 'ストラテジ系', icon: '📈', title: '経営戦略',
     sections: [
       {
-        id: 'st-analysis', title: '経営環境の分析(SWOT・3C・5フォース)', topics: ['経営分析'],
+        id: 'st-analysis', visual: 'swot', title: '経営環境の分析(SWOT・3C・5フォース)', topics: ['経営分析'],
         lead: '内部か外部か、プラスかマイナスか。2×2 で整理するのが SWOT。',
         body: [
           '**SWOT 分析** は、**内部環境** の強み(Strength)・弱み(Weakness)と、**外部環境** の機会(Opportunity)・脅威(Threat)を整理する。**機会** は市場の拡大や規制緩和など、自社に有利に働く外部の変化。',
@@ -117,7 +117,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
     id: 'ch-industry', field: 'ビジネスインダストリ', category: 'ストラテジ系', icon: '🤖', title: 'ビジネスインダストリ',
     sections: [
       {
-        id: 'ind-ai', title: 'IoT と AI(機械学習)', topics: ['IoT・AI'],
+        id: 'ind-ai', visual: 'ml', title: 'IoT と AI(機械学習)', topics: ['IoT・AI'],
         lead: '正解つきで学ぶ「教師あり」、正解なしで構造を見つける「教師なし」、試行錯誤の「強化学習」。',
         body: [
           '**教師あり学習** は、入力と **正解ラベル** の組を大量に与えて学習させ、未知の入力に対する出力を予測する(分類・回帰)。例:メールのスパム判定。',
@@ -165,7 +165,7 @@ window.TEXTBOOK = (window.TEXTBOOK || []).concat([
         visual: 'bep'
       },
       {
-        id: 'corp-account', title: '財務諸表と会計指標', topics: ['会計'],
+        id: 'corp-account', visual: 'bs', title: '財務諸表と会計指標', topics: ['会計'],
         lead: '貸借対照表は「ある時点の財産」、損益計算書は「ある期間の儲け」。',
         body: [
           '**貸借対照表(B/S)** は **決算日時点** の **資産・負債・純資産** の残高を表す。左側(借方)が資産、右側(貸方)が負債と純資産で、**資産 = 負債 + 純資産** が常に成り立つ。',

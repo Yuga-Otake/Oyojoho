@@ -112,7 +112,7 @@ window.SC_TEXTBOOK = (window.SC_TEXTBOOK || []).concat([
         visual: 'pwcrack'
       },
       {
-        id: 'sc-fido', title: '多要素認証と FIDO', topics: ['FIDO'],
+        id: 'sc-fido', visual: 'mfa', title: '多要素認証と FIDO', topics: ['FIDO'],
         lead: 'サーバに秘密を置かない。だから漏れても、フィッシングされても悪用されにくい。',
         body: [
           '認証の3要素は **知識・所持・生体**。異なる要素を組み合わせるのが多要素認証。SMS のワンタイムパスワードは SIM スワップや中継型フィッシング(リアルタイムフィッシング)で突破されることがある。',
@@ -177,7 +177,7 @@ window.SC_TEXTBOOK = (window.SC_TEXTBOOK || []).concat([
         visual: 'tlshs'
       },
       {
-        id: 'sc-pki', title: '証明書の種類・失効確認・CT・HSTS', topics: ['証明書の失効確認', 'Certificate Transparency', 'HSTS', 'サーバ証明書'],
+        id: 'sc-pki', visual: 'certchain', title: '証明書の種類・失効確認・CT・HSTS', topics: ['証明書の失効確認', 'Certificate Transparency', 'HSTS', 'サーバ証明書'],
         lead: '証明書を「正しく発行させ」「失効を確かめ」「必ず HTTPS で使わせる」ための仕組み。',
         body: [
           'サーバ証明書は確認の厳しさで **DV**(ドメインの管理権のみ)、**OV**(組織の実在性も)、**EV**(さらに厳格な審査)に分かれる。どれも暗号の強さは同じで、サイトが安全であることは保証しない。フィッシングサイトでも DV 証明書は取得できる。',
@@ -322,7 +322,7 @@ window.SC_TEXTBOOK = (window.SC_TEXTBOOK || []).concat([
         visual: 'amp'
       },
       {
-        id: 'sc-lan', title: 'LAN 内の攻撃(ARP スプーフィングなど)', topics: ['ARPスプーフィング'],
+        id: 'sc-lan', visual: 'arp', title: 'LAN 内の攻撃(ARP スプーフィングなど)', topics: ['ARPスプーフィング'],
         lead: '認証のないプロトコルは、偽の応答を信じてしまう。',
         body: [
           '**ARP スプーフィング** は、偽の ARP 応答で IP アドレスと MAC アドレスの対応を書き換え、通信を攻撃者の端末経由にする中間者攻撃。スイッチの **Dynamic ARP Inspection**、重要な機器の静的 ARP エントリ、通信の暗号化で対策する。',
@@ -346,7 +346,7 @@ window.SC_TEXTBOOK = (window.SC_TEXTBOOK || []).concat([
     id: 'sc-ch-malware', field: 'マルウェア・攻撃動向', category: 'セキュリティ技術', icon: '🦠', title: 'マルウェア・攻撃動向',
     sections: [
       {
-        id: 'sc-apt', title: '標的型攻撃とランサムウェア', topics: ['標的型攻撃', 'ランサムウェア', 'ファイルレスマルウェア'],
+        id: 'sc-apt', visual: 'killchain', title: '標的型攻撃とランサムウェア', topics: ['標的型攻撃', 'ランサムウェア', 'ファイルレスマルウェア'],
         lead: '侵入 → 潜伏・横展開 → 目的の実行。どの段階で止めるかを考える。',
         body: [
           '標的型攻撃は、偵察 → 侵入(標的型メール、VPN 機器の脆弱性、リモートデスクトップ)→ **C&C サーバとの通信の確立** → 権限昇格・**横展開(ラテラルムーブメント)** → 情報窃取・破壊、と段階的に進む(サイバーキルチェーン)。',
@@ -405,7 +405,7 @@ window.SC_TEXTBOOK = (window.SC_TEXTBOOK || []).concat([
         visual: 'fwrule'
       },
       {
-        id: 'sc-detect', title: '検知と対応の仕組み(IDS/IPS・EDR・SIEM・サンドボックス)', topics: ['IDS・IPS', 'EDR', 'SIEM', 'サンドボックス'],
+        id: 'sc-detect', visual: 'idsroc', title: '検知と対応の仕組み(IDS/IPS・EDR・SIEM・サンドボックス)', topics: ['IDS・IPS', 'EDR', 'SIEM', 'サンドボックス'],
         lead: '「入られない」だけでなく「入られたことに早く気づき、すぐ止める」。',
         body: [
           '**IDS** は不正な通信を検知して通知、**IPS** は遮断まで行う。検知方式には、既知の攻撃パターンと照合する **シグネチャ型** と、平常時との違いで検知する **アノマリ型** がある。',
@@ -544,7 +544,7 @@ window.SC_TEXTBOOK = (window.SC_TEXTBOOK || []).concat([
         visual: 'riskmatrix'
       },
       {
-        id: 'sc-incident', title: 'インシデント対応とフォレンジック', topics: ['インシデント対応', 'フォレンジック', 'CSIRT'],
+        id: 'sc-incident', visual: 'ir', title: 'インシデント対応とフォレンジック', topics: ['インシデント対応', 'フォレンジック', 'CSIRT'],
         lead: '「広げない」と「証拠を消さない」を両立させるのが初動の要。',
         body: [
           'インシデント対応は **準備 → 検知・分析 → 封じ込め → 根絶 → 復旧 → 事後の教訓** の流れで進める。',
