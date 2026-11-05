@@ -1,0 +1,46 @@
+/* 体感ビジュアル(業務・システム・ストラテジ系の追加分) */
+.vx-biz-big { font-size: 2.4rem; font-weight: 800; line-height: 1.1; color: var(--primary); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.vx-biz-select {
+  font: inherit; font-size: .84rem; padding: 4px 4px; min-width: 0; width: auto; max-width: 100%;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
+}
+
+.vx-biz-card {
+  background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px;
+  font-size: .95rem; line-height: 1.7; overflow-wrap: anywhere;
+}
+.vx-biz-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border); }
+.vx-biz-stmt { flex: 1 1 180px; min-width: 0; font-size: .88rem; line-height: 1.6; overflow-wrap: anywhere; }
+
+/* SWOT の 2x2 */
+.vx-biz-quad { display: grid; grid-template-columns: 4.6em minmax(0, 1fr) minmax(0, 1fr); gap: 6px; font-size: .8rem; }
+.vx-biz-quad-h, .vx-biz-quad-r {
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-weight: 700; font-size: .78rem; color: var(--text-muted);
+}
+.vx-biz-cell {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 6px; min-height: 96px; min-width: 0; display: flex; flex-direction: column; gap: 4px;
+}
+.vx-biz-cell-key { font-weight: 800; color: var(--primary); }
+.vx-biz-cell.neg .vx-biz-cell-key { color: var(--danger); }
+.vx-biz-item {
+  background: var(--surface); border-radius: 6px; padding: 3px 6px; line-height: 1.5;
+  overflow-wrap: anywhere; border-left: 3px solid var(--primary);
+}
+.vx-biz-item.ok { border-left-color: var(--success); }
+.vx-biz-item.ng { border-left-color: var(--danger); color: var(--danger); }
+
+/* 貸借対照表 */
+.vx-biz-frame { fill: none; stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.vx-biz-seg { stroke: var(--surface); stroke-width: 1.5; }
+.vx-biz-seg-cash { fill: var(--success); }
+.vx-biz-seg-stock { fill: var(--primary); }
+.vx-biz-seg-equip { fill: var(--primary); opacity: .5; }
+.vx-biz-seg-loan { fill: var(--warn); }
+.vx-biz-seg-cap { fill: var(--text-muted); opacity: .6; }
+.vx-biz-seg-ret { fill: var(--success); opacity: .5; }
+.vx-biz-lbl { fill: var(--text); font-size: 11px; }
+.vx-biz-lbl.zero { fill: var(--text-muted); }
+.vx-biz-ttl { fill: var(--text); font-size: 12px; font-weight: 700; }
+.vx-biz-eq { fill: var(--text); font-size: 22px; font-weight: 700; }
